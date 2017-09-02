@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block head %}
+  {{ super() }}
+  {% if article.description %}
+    <meta name="description" content="{{article.description}}" />
+  {% endif %}
+
+  {% for tag in article.tags %}
+    <meta name="tags" content="{{tag}}" />
+  {% endfor %}
+
+{% endblock %}
+
+{% block content %}
+	<section id="content">
+	  <header>
+		<h2>
+		  <a href="{{ SITEURL }}/{{ article.url }}" rel="bookmark"
+			 title="Permalink to {{ article.title|striptags }}">{{ article.title }}</a></h2>
+	  </header>
+	  <footer>
+		<time datetime="{{ article.date.isoformat() }}">
+		    {{ article.locale_date }}
+		</time>
+	  </footer>
+	  <div>
+		{{ article.content }}
+	  </div>
+	  <footer>
+		<hr/>
+		{% if article.modified %}
+		<time datetime="{{ article.modified.isoformat() }}">
+		  Last Updated: {{ article.locale_modified }}
+		</time>
+		{% endif %}
+		{% if article.category %}
+			Posted in: <a href="{{ SITEURL }}/{{ article.category.url }}">{{ article.category.name }}</a>
+		{% endif %}
+			<br />
+		{% if article.tags %}
+			Tags:
+			{% for tag in article.tags%}
+			    <a href="{{ SITEURL }}/{{ tag.url }}">{{ tag.name }}</a>{% if not loop.last %}, {% endif %}
+			{% endfor %}
+		{% endif %}
+	  </footer>
+	</section>
+{% endblock %}
