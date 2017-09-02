@@ -15,3 +15,16 @@ It uses a custom made theme which I made (not really, I didn't write a single li
 Let's see if we can write **bold** and _italics_ text with it. It is also renders images responsively.
 
 ![REEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE]({filename}/images/reeeeeeeeeeeeeeeeeeeeeeeeeeeee.jpg)
+
+
+Sample python code as syntax highlight test
+
+	:::python
+
+	from django.shortcuts import render
+
+	# show hello world page
+	def hello_world(request):
+		return render(request, 'hello_world.html')
+
+That's all I can think of now :)
