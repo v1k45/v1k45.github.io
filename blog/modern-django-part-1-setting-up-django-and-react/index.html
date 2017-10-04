@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+  			<title>Modern Django: Part 1: Setting up Django and React &mdash; v1k45</title>
+			<meta charset="utf-8" />
+			<meta name="viewport" content="width=device-width" />
+
+			<link href="http://v1k45.com/feeds/all.atom.xml" type="application/atom+xml" rel="alternate" title="v1k45 Full Atom Feed" />
+			<link href="http://v1k45.com/feeds/web-development.atom.xml" type="application/atom+xml" rel="alternate" title="v1k45 Categories Atom Feed" />
+
+			<link rel="stylesheet" href="/theme/css/sakura-dark.css" type="text/css" media="screen" title="no title" charset="utf-8">
+			<link rel="stylesheet" href="/theme/css/pygment.css" type="text/css" media="screen" title="no title" charset="utf-8">
+
+
+
+
+    <meta name="tags" content="python" />
+    <meta name="tags" content="django" />
+    <meta name="tags" content="javascript" />
+    <meta name="tags" content="js" />
+    <meta name="tags" content="react" />
+
+	</head>
+
+	<body>
+        <header>
+			<nav>
+				<a href="/">v1k45</a>
+				[
+						<a href=/>about</a>,&nbsp;
+
+						<a href=/blog/>blog</a>
+							,&nbsp;
+						<a href=https://github.com/v1k45>github</a>
+							,&nbsp;
+						<a href=http://stackoverflow.com/users/4726598/v1k45>stackoverflow</a>
+				]
+			</nav>
+        </header>
+		<main>
+  <section id="content">
+    <header>
+    <h2>
+      <a href="http://v1k45.com/blog/modern-django-part-1-setting-up-django-and-react/" rel="bookmark"
+       title="Permalink to Modern Django: Part 1: Setting up Django and React">Modern Django: Part 1: Setting up Django and React</a></h2>
+    </header>
+    <footer>
+    <time datetime="2017-10-05T01:45:00+05:30">
+        Thu 05 October 2017
+    </time>
+    </footer>
+    <div>
+    <h3>Introduction</h3>
+<p>This will be a multi part tutorial series on how to create a "Modern" web application or SPA using Django and React.js.</p>
+<p>We will create a Note taking Single Page Application which will be rendered by ReactJS with Django as an API backend. Let's call it "ponynote", because ponies are quite popular within django community.</p>
+<p>We will be using multiple libraries in this project, mainly, <code>django-rest-framework</code> for creating APIs easily, <code>react-router-dom</code> for handling in-app routing, <code>redux</code> for maintaing global application state.</p>
+<p>This part of the series is about setting up your project to serve django and react seamlessly.</p>
+<h3>Environment setup</h3>
+<p>I'll assume that you can setup your machine to run Python3 and Node &gt;=6 on your own or using the tutorials available on the internet.</p>
+<p>I highly recommened you to use python virualenv so that your project dependencies do not disturb system-wide python installation. I use <a href="https://virtualenvwrapper.readthedocs.io/en/latest/">virtualenvwrapper</a> to maintain multiple virtualenvs at single place using easy commands. I'll be using it throughout the tutorial.</p>
+<h3>Setup Django</h3>
+<p>After you have created and activated your virtualenv. You can start by installing django.</p>
+<div class="highlight"><pre><span></span>(ponynote)  $ pip install django
+</pre></div>
+
+
+<p>After installing django, we will create a project called <code>ponynote</code> using <code>django-admin</code> tool.</p>
+<div class="highlight"><pre><span></span>(ponynote)  $ django-admin startproject ponynote
+</pre></div>
+
+
+<p>It will generate the following project:</p>
+<div class="highlight"><pre><span></span>(ponynote)  $ tree
+.
+└── ponynote
+    ├── manage.py
+    └── ponynote
+        ├── __init__.py
+        ├── settings.py
+        ├── urls.py
+        └── wsgi.py
+
+2 directories, 5 files
+</pre></div>
+
+
+<p>After migrating and runing development server, you will be able to see the "It worked!" welcome page of Django on <a href="http://127.0.0.1:8000">http://127.0.0.1:8000</a>.</p>
+<div class="highlight"><pre><span></span>(ponynote)  $ cd ponynote
+(ponynote)  $ ./manage.py migrate
+(ponynote)  $ ./manage.py runserver
+</pre></div>
+
+
+<p>Now that we have got django working, it is time to set it up to work with React JS.</p>
+<h3>Setup ReactJS with Webpack</h3>
+<p>If you haven't heard of Webpack before, it has now become the defacto tool to for <em>module bundling</em>, compiling all your dependencies to a small bundles (mostly one). You can learn more about webpack from their <a href="https://webpack.js.org/">official website</a>.</p>
+<p>We won't be directly writing webpack configuration ourselves though, we will use <code>create-react-app</code> to generate the project boilerplate with all the configurations in it. Think of <code>create-react-app</code> as <code>django-admin startproject</code> command but much more powerful.</p>
+<p>For this, first we will install <code>create-react-app</code> sytem-wide using npm. Because we are installing system-wide, we will need superuser permissions.</p>
+<div class="highlight"><pre><span></span>$ sudo npm install -g create-react-app
+</pre></div>
+
+
+<p>After installing we will create a react application using that command and then ejecting the config files so that we can edit them ourselves.</p>
+<div class="highlight"><pre><span></span>$ create-react-app frontend
+$ <span class="nb">cd</span> frontend
+$ npm run eject
+</pre></div>
+
+
+<p>It will create the following structure:</p>
+<div class="highlight"><pre><span></span>$ tree -I node_modules
+.
+├── config
+│   ├── env.js
+│   ├── jest
+│   │   ├── cssTransform.js
+│   │   └── fileTransform.js
+│   ├── paths.js
+│   ├── polyfills.js
+│   ├── webpack.config.dev.js
+│   ├── webpack.config.prod.js
+│   └── webpackDevServer.config.js
+├── package.json
+├── public
+│   ├── favicon.ico
+│   ├── index.html
+│   └── manifest.json
+├── README.md
+├── scripts
+│   ├── build.js
+│   ├── start.js
+│   └── test.js
+└── src
+    ├── App.css
+    ├── App.js
+    ├── App.test.js
+    ├── index.css
+    ├── index.js
+    ├── logo.svg
+    └── registerServiceWorker.js
+
+<span class="m">5</span> directories, <span class="m">23</span> files
+</pre></div>
+
+
+<p>It is pretty obvious by the directory name that which file is store where.</p>
+<p>You can test this application by running</p>
+<div class="highlight"><pre><span></span>$ npm run start
+</pre></div>
+
+
+<p>This will show a React welcome page.</p>
+<p><img alt="React welcome page" src="http://v1k45.com/images/modern-django-1-react-welcome.png"></p>
+<p>The development server has hot loading enabled by default. This means any changes you do in you source files will be instantly reflected in the browser without you having to refresh the page manually again and again.</p>
+<h3>Integrating React and Django</h3>
+<p>Now that we have a working django server and webpack dev server running react, we will now integrate both of them so that Django can show the SPA from it's own server. We will do that using <code>django-webpack-loader</code> a django application which injects link and script tag for the bundles which webpack generates dynamically.</p>
+<p>We will start by installing <code>webpack_loader</code> in our django project first:</p>
+<div class="highlight"><pre><span></span>(ponynote)  $ pip install django-webpack-loader
+</pre></div>
+
+
+<p>Then in the project settings.py (<code>ponynote.settings</code>) add <code>webpack_loader</code> in <code>INSTALLED_APPS</code> list and add the following.</p>
+<div class="highlight"><pre><span></span><span class="n">WEBPACK_LOADER</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;DEFAULT&#39;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s1">&#39;BUNDLE_DIR_NAME&#39;</span><span class="p">:</span> <span class="s1">&#39;bundles/&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;STATS_FILE&#39;</span><span class="p">:</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">BASE_DIR</span><span class="p">,</span> <span class="s1">&#39;webpack-stats.dev.json&#39;</span><span class="p">),</span>
+        <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>To serve the index page of the application we need to create a view and template in django. We'll start by creating an index template at <code>templates/index.html</code> in project root. We will also need to update project's template settings so it it can detect the tempalte directory.</p>
+<p>In <code>ponynote.settings.py</code>'s TEMPLATES setting:</p>
+<div class="highlight"><pre><span></span><span class="n">TEMPLATES</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="p">{</span>
+        <span class="c1"># ... other settings</span>
+        <span class="s1">&#39;DIRS&#39;</span><span class="p">:</span> <span class="p">[</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">BASE_DIR</span><span class="p">,</span> <span class="s2">&quot;templates&quot;</span><span class="p">),</span> <span class="p">],</span>
+        <span class="c1"># ... other settings</span>
+    <span class="p">},</span>
+<span class="p">]</span>
+</pre></div>
+
+
+<p>Put the following content in your <code>templates/index.html</code>:</p>
+<div class="highlight"><pre><span></span>{% load render_bundle from webpack_loader %}
+<span class="cp">&lt;!DOCTYPE html&gt;</span>
+<span class="p">&lt;</span><span class="nt">html</span><span class="p">&gt;</span>
+  <span class="p">&lt;</span><span class="nt">head</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="nt">meta</span> <span class="na">charset</span><span class="o">=</span><span class="s">&quot;UTF-8&quot;</span> <span class="p">/&gt;</span>
+    <span class="p">&lt;</span><span class="nt">meta</span> <span class="na">name</span><span class="o">=</span><span class="s">&quot;viewport&quot;</span> <span class="na">content</span><span class="o">=</span><span class="s">&quot;width=device-width&quot;</span> <span class="p">/&gt;</span>
+    <span class="p">&lt;</span><span class="nt">title</span><span class="p">&gt;</span>Ponynote<span class="p">&lt;/</span><span class="nt">title</span><span class="p">&gt;</span>
+  <span class="p">&lt;/</span><span class="nt">head</span><span class="p">&gt;</span>
+  <span class="p">&lt;</span><span class="nt">body</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="nt">div</span> <span class="na">id</span><span class="o">=</span><span class="s">&quot;root&quot;</span><span class="p">&gt;</span>
+    <span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
+      {% render_bundle &#39;main&#39; %}
+  <span class="p">&lt;/</span><span class="nt">body</span><span class="p">&gt;</span>
+<span class="p">&lt;/</span><span class="nt">html</span><span class="p">&gt;</span>
+</pre></div>
+
+
+<p>The HTML division with <code>root</code> id is the mounting point of our react application. The <code>render_bundle</code> tag with <code>main</code> as argument renders script tag for bundle named <code>main</code> which is produced by out webpack config.</p>
+<p>Now that the template is ready, let's create a view to serve it. Since this will be a plain template, we can use django's <code>TemplateView</code> directly in our url config. In your project <code>ponynote.urls.py</code> file:</p>
+<div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">django.conf.urls</span> <span class="kn">import</span> <span class="n">url</span>
+<span class="kn">from</span> <span class="nn">django.contrib</span> <span class="kn">import</span> <span class="n">admin</span>
+<span class="kn">from</span> <span class="nn">django.views.generic</span> <span class="kn">import</span> <span class="n">TemplateView</span>
+
+<span class="n">urlpatterns</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="n">url</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;^admin/&#39;</span><span class="p">,</span> <span class="n">admin</span><span class="o">.</span><span class="n">site</span><span class="o">.</span><span class="n">urls</span><span class="p">),</span>
+    <span class="n">url</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;^&#39;</span><span class="p">,</span> <span class="n">TemplateView</span><span class="o">.</span><span class="n">as_view</span><span class="p">(</span><span class="n">template_name</span><span class="o">=</span><span class="s2">&quot;index.html&quot;</span><span class="p">)),</span>
+<span class="p">]</span>
+</pre></div>
+
+
+<p>If you refresh your django homepage, you should see an error page with text <code>Are you sure webpack has generated the file and the path is correct?</code>. This means <code>webpack_loader</code> was searching for a file we specified in settings and was unable to find it.</p>
+<p><img alt="Django webpack error" src="http://v1k45.com/images/modern-django-1-webpack-error.png"></p>
+<p>In order to generate this file, we need to install <code>webpack-bundle-tracker</code> plugin and configure webpack to generate required files. In <code>frontend</code> directory, run the following commands:</p>
+<div class="highlight"><pre><span></span>$ npm install webpack-bundle-tracker --save-dev
+</pre></div>
+
+
+<p>In your <code>frontend/config/paths.js</code> add the following key and value in the <code>module.exports</code> object.</p>
+<div class="highlight"><pre><span></span><span class="nx">module</span><span class="p">.</span><span class="nx">exports</span> <span class="o">=</span> <span class="p">{</span>
+  <span class="c1">// ... other values</span>
+  <span class="nx">statsRoot</span><span class="o">:</span> <span class="nx">resolveApp</span><span class="p">(</span><span class="s1">&#39;../&#39;</span><span class="p">),</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>In <code>frontend/config/webpack.config.dev.js</code> change <code>publicPath</code> and <code>publicUrl</code> to <code>http://localhost:3000/</code>.</p>
+<div class="highlight"><pre><span></span><span class="kr">const</span> <span class="nx">publicPath</span> <span class="o">=</span> <span class="s1">&#39;http://localhost:3000/&#39;</span><span class="p">;</span>
+<span class="kr">const</span> <span class="nx">publicUrl</span> <span class="o">=</span> <span class="s1">&#39;http://localhost:3000/&#39;</span><span class="p">;</span>
+</pre></div>
+
+
+<p>In the same file, import <code>webpack-bundle-tracker</code> and include <code>BundleTracker</code> in webpack plugins and replace <code>webpackHotDevClient</code> line with the other two modules.</p>
+<div class="highlight"><pre><span></span><span class="kr">const</span> <span class="nx">BundleTracker</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s1">&#39;webpack-bundle-tracker&#39;</span><span class="p">);</span>
+
+<span class="nx">module</span><span class="p">.</span><span class="nx">exports</span> <span class="o">=</span> <span class="p">{</span>
+  <span class="nx">entry</span><span class="o">:</span> <span class="p">[</span>
+    <span class="c1">// ... KEEP OTHER VALUES</span>
+    <span class="nx">require</span><span class="p">.</span><span class="nx">resolve</span><span class="p">(</span><span class="s1">&#39;webpack-dev-server/client&#39;</span><span class="p">)</span> <span class="o">+</span> <span class="s1">&#39;?http://localhost:3000&#39;</span><span class="p">,</span>
+    <span class="nx">require</span><span class="p">.</span><span class="nx">resolve</span><span class="p">(</span><span class="s1">&#39;webpack/hot/dev-server&#39;</span><span class="p">),</span>
+    <span class="c1">// require.resolve(&#39;react-dev-utils/webpackHotDevClient&#39;),</span>
+  <span class="p">],</span>
+  <span class="nx">plugins</span><span class="o">:</span> <span class="p">[</span>
+    <span class="c1">// ... other plugins</span>
+    <span class="k">new</span> <span class="nx">BundleTracker</span><span class="p">({</span><span class="nx">path</span><span class="o">:</span> <span class="nx">paths</span><span class="p">.</span><span class="nx">statsRoot</span><span class="p">,</span> <span class="nx">filename</span><span class="o">:</span> <span class="s1">&#39;webpack-stats.dev.json&#39;</span><span class="p">}),</span>
+  <span class="p">],</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>The reason of replacing <code>webpackHotDevClient</code>, <code>publicPath</code> and <code>publicUrl</code> is that we are going to serve webpack dev server's bundle on a django page, and we don't want webpack hot loader to send requests to wrong url/host.</p>
+<p>Now in <code>frontend/config/webpackDevServer.config.js</code> we need to allow the server to accept requests from external origins. <a href="http://localhost:8000">http://localhost:8000</a> (Django server) will send XHR requests to <a href="http://localhost:3000">http://localhost:3000</a> webpack server to check for source file changes.</p>
+<p>Put <code>headers</code> object in the object returned by the exported function. This object is to be placed at the same level of <code>https</code> and <code>host</code> properties.</p>
+<div class="highlight"><pre><span></span>headers: {
+  &#39;Access-Control-Allow-Origin&#39;: &#39;*&#39;
+},
+</pre></div>
+
+
+<p>That's it. Stop the webpack server and run it again and go to <a href="http://localhost:8000/">http://localhost:8000/</a>, you should see the same react welocme page as you did on webpack server page.</p>
+<p>Now, any changes you do in <code>src/App.js</code> file will be instantly reflected on the opened page in browser using hot loading.</p>
+<div class="highlight"><pre><span></span><span class="kr">import</span> <span class="nx">React</span><span class="p">,</span> <span class="p">{</span> <span class="nx">Component</span> <span class="p">}</span> <span class="nx">from</span> <span class="s1">&#39;react&#39;</span><span class="p">;</span>
+<span class="kr">import</span> <span class="nx">logo</span> <span class="nx">from</span> <span class="s1">&#39;./logo.svg&#39;</span><span class="p">;</span>
+<span class="kr">import</span> <span class="s1">&#39;./App.css&#39;</span><span class="p">;</span>
+
+<span class="kr">class</span> <span class="nx">App</span> <span class="kr">extends</span> <span class="nx">Component</span> <span class="p">{</span>
+  <span class="nx">render</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="p">(</span>
+      <span class="p">&lt;</span><span class="nt">div</span> <span class="na">className</span><span class="o">=</span><span class="s">&quot;App&quot;</span><span class="p">&gt;</span>
+        <span class="p">&lt;</span><span class="nt">header</span> <span class="na">className</span><span class="o">=</span><span class="s">&quot;App-header&quot;</span><span class="p">&gt;</span>
+          <span class="p">&lt;</span><span class="nt">img</span> <span class="na">src</span><span class="o">=</span><span class="s">{logo}</span> <span class="na">className</span><span class="o">=</span><span class="s">&quot;App-logo&quot;</span> <span class="na">alt</span><span class="o">=</span><span class="s">&quot;logo&quot;</span> <span class="p">/&gt;</span>
+          <span class="p">&lt;</span><span class="nt">h1</span> <span class="na">className</span><span class="o">=</span><span class="s">&quot;App-title&quot;</span><span class="p">&gt;</span><span class="nx">Welcome</span> <span class="nx">to</span> <span class="nx">Ponynote</span><span class="p">&lt;/</span><span class="nt">h1</span><span class="p">&gt;</span>
+        <span class="p">&lt;/</span><span class="nt">header</span><span class="p">&gt;</span>
+        <span class="p">&lt;</span><span class="nt">p</span> <span class="na">className</span><span class="o">=</span><span class="s">&quot;App-intro&quot;</span><span class="p">&gt;</span>
+            <span class="nx">A</span> <span class="nx">react</span> <span class="nx">app</span> <span class="kd">with</span> <span class="nx">django</span> <span class="nx">as</span> <span class="nx">a</span> <span class="nx">backend</span><span class="p">.</span>
+        <span class="p">&lt;/</span><span class="nt">p</span><span class="p">&gt;</span>
+      <span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
+    <span class="p">);</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="kr">export</span> <span class="k">default</span> <span class="nx">App</span><span class="p">;</span>
+</pre></div>
+
+
+<p>This will render the following page:</p>
+<p><img alt="Django and React welcome page" src="http://v1k45.com/images/modern-django-1-django-welcome.png"></p>
+<p>That's all on how to setup react and django to work together. In next post we'll setup in-application routing using <code>react-router-dom</code> and global state management using <code>redux</code>.</p>
+<h3>References</h3>
+<ul>
+<li><a href="http://owaislone.org/blog/webpack-plus-reactjs-and-django/">Using Webpack transparently with Django</a></li>
+<li><a href="https://github.com/ezhome/django-webpack-loader">django-webpack-loader</a></li>
+<li><a href="https://github.com/facebookincubator/create-react-app">create-react-app</a></li>
+<li><a href="https://www.fusionbox.com/blog/detail/create-react-app-and-django/624/">Create React App and Django</a></li>
+</ul>
+    </div>
+    <footer>
+    <hr/>
+      Posted in: <a href="http://v1k45.com/blog/categories/web-development/">Web Development</a>
+      <br />
+      Tags:
+          <a href="http://v1k45.com/blog/tags/python/">python</a>,           <a href="http://v1k45.com/blog/tags/django/">django</a>,           <a href="http://v1k45.com/blog/tags/javascript/">javascript</a>,           <a href="http://v1k45.com/blog/tags/js/">js</a>,           <a href="http://v1k45.com/blog/tags/react/">react</a><div id="disqus_thread"></div>
+<script>
+  var disqus_config = function () {
+    this.page.url = "http://v1k45.com/blog/modern-django-part-1-setting-up-django-and-react/";
+    this.page.identifier = "modern-django-part-1-setting-up-django-and-react";
+  };
+  (function() { // DON'T EDIT BELOW THIS LINE
+  var d = document, s = d.createElement('script');
+    s.src = 'https://v1k45.disqus.com/embed.js';
+  s.setAttribute('data-timestamp', +new Date());
+  (d.head || d.body).appendChild(s);
+  })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>    </footer>
+  </section>
+		</main>
+	<script id="dsq-count-scr" src="//v1k45.disqus.com/count.js" async></script>
+	</body>
+</html>
