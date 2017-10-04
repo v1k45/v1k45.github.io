@@ -5,6 +5,7 @@ from __future__ import unicode_literals
 AUTHOR = 'Vikas Yadav'
 SITENAME = "v1k45"
 SITEURL = ''
+DISQUS_NAME = "v1k45"
 
 PATH = 'content'
 
