@@ -20,6 +20,12 @@
     <meta name="tags" content="js" />
     <meta name="tags" content="react" />
 
+
+		<style type="text/css" media="screen">
+			body {
+				font-family: "Helivetica Neue",Helvetica,arial,sans-serif;
+			}
+		</style>
 	</head>
 
 	<body>
@@ -55,6 +61,7 @@
 <p>We will create a Note taking Single Page Application which will be rendered by ReactJS with Django as an API backend. Let's call it "ponynote", because ponies are quite popular within django community.</p>
 <p>We will be using multiple libraries in this project, mainly, <code>django-rest-framework</code> for creating APIs easily, <code>react-router-dom</code> for handling in-app routing, <code>redux</code> for maintaing global application state.</p>
 <p>This part of the series is about setting up your project to serve django and react seamlessly.</p>
+<p>The code for this repository is hosted on my github, <a href="https://github.com/v1k45/ponynote">v1k45/ponynote</a>. You can checkout <code>part-1</code> branch to all the changes done till the end of this part.</p>
 <h3>Environment setup</h3>
 <p>I'll assume that you can setup your machine to run Python3 and Node &gt;=6 on your own or using the tutorials available on the internet.</p>
 <p>I highly recommened you to use python virualenv so that your project dependencies do not disturb system-wide python installation. I use <a href="https://virtualenvwrapper.readthedocs.io/en/latest/">virtualenvwrapper</a> to maintain multiple virtualenvs at single place using easy commands. I'll be using it throughout the tutorial.</p>
@@ -239,11 +246,13 @@ $ npm run eject
 <span class="nx">module</span><span class="p">.</span><span class="nx">exports</span> <span class="o">=</span> <span class="p">{</span>
   <span class="nx">entry</span><span class="o">:</span> <span class="p">[</span>
     <span class="c1">// ... KEEP OTHER VALUES</span>
+    <span class="c1">// this will be found near line 30 of the file</span>
     <span class="nx">require</span><span class="p">.</span><span class="nx">resolve</span><span class="p">(</span><span class="s1">&#39;webpack-dev-server/client&#39;</span><span class="p">)</span> <span class="o">+</span> <span class="s1">&#39;?http://localhost:3000&#39;</span><span class="p">,</span>
     <span class="nx">require</span><span class="p">.</span><span class="nx">resolve</span><span class="p">(</span><span class="s1">&#39;webpack/hot/dev-server&#39;</span><span class="p">),</span>
     <span class="c1">// require.resolve(&#39;react-dev-utils/webpackHotDevClient&#39;),</span>
   <span class="p">],</span>
   <span class="nx">plugins</span><span class="o">:</span> <span class="p">[</span>
+    <span class="c1">// this will be found near line 215-220 of the file.</span>
     <span class="c1">// ... other plugins</span>
     <span class="k">new</span> <span class="nx">BundleTracker</span><span class="p">({</span><span class="nx">path</span><span class="o">:</span> <span class="nx">paths</span><span class="p">.</span><span class="nx">statsRoot</span><span class="p">,</span> <span class="nx">filename</span><span class="o">:</span> <span class="s1">&#39;webpack-stats.dev.json&#39;</span><span class="p">}),</span>
   <span class="p">],</span>
@@ -299,6 +308,10 @@ $ npm run eject
     </div>
     <footer>
     <hr/>
+    <time datetime="2017-10-31T23:30:00+05:30">
+      Last Updated: Tue 31 October 2017
+    </time>
+	<br />
       Posted in: <a href="http://v1k45.com/blog/categories/web-development/">Web Development</a>
       <br />
       Tags:
