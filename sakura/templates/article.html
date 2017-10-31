@@ -36,6 +36,7 @@
     <time datetime="{{ article.modified.isoformat() }}">
       Last Updated: {{ article.locale_modified }}
     </time>
+	<br />
     {% endif %}
     {% if article.category %}
       Posted in: <a href="{{ SITEURL }}/{{ article.category.url }}">{{ article.category.name }}</a>

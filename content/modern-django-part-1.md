@@ -1,5 +1,6 @@
 Title: Modern Django: Part 1: Setting up Django and React
 Date: 2017-10-05 01:45
+Modified: 2017-10-31 23:30
 Category: Web Development
 Tags: python, django, javascript, js, react
 
@@ -13,6 +14,8 @@ We will create a Note taking Single Page Application which will be rendered by R
 We will be using multiple libraries in this project, mainly, `django-rest-framework` for creating APIs easily, `react-router-dom` for handling in-app routing, `redux` for maintaing global application state.
 
 This part of the series is about setting up your project to serve django and react seamlessly.
+
+The code for this repository is hosted on my github, [v1k45/ponynote](https://github.com/v1k45/ponynote). You can checkout `part-1` branch to all the changes done till the end of this part.
 
 ### Environment setup
 
@@ -240,11 +243,13 @@ const BundleTracker = require('webpack-bundle-tracker');
 module.exports = {
   entry: [
 	// ... KEEP OTHER VALUES
+	// this will be found near line 30 of the file
     require.resolve('webpack-dev-server/client') + '?http://localhost:3000',
     require.resolve('webpack/hot/dev-server'),
     // require.resolve('react-dev-utils/webpackHotDevClient'),
   ],
   plugins: [
+	// this will be found near line 215-220 of the file.
 	// ... other plugins
     new BundleTracker({path: paths.statsRoot, filename: 'webpack-stats.dev.json'}),
   ],
