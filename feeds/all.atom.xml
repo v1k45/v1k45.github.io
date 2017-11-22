@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<feed xmlns="http://www.w3.org/2005/Atom"><title>v1k45</title><link href="http://v1k45.com/" rel="alternate"></link><link href="http://v1k45.com/feeds/all.atom.xml" rel="self"></link><id>http://v1k45.com/</id><updated>2017-10-31T23:30:00+05:30</updated><entry><title>Modern Django: Part 1: Setting up Django and React</title><link href="http://v1k45.com/blog/modern-django-part-1-setting-up-django-and-react/" rel="alternate"></link><published>2017-10-05T01:45:00+05:30</published><updated>2017-10-31T23:30:00+05:30</updated><author><name>Vikas Yadav</name></author><id>tag:v1k45.com,2017-10-05:/blog/modern-django-part-1-setting-up-django-and-react/</id><summary type="html">&lt;h3&gt;Introduction&lt;/h3&gt;
+<feed xmlns="http://www.w3.org/2005/Atom"><title>v1k45</title><link href="http://v1k45.com/" rel="alternate"></link><link href="http://v1k45.com/feeds/all.atom.xml" rel="self"></link><id>http://v1k45.com/</id><updated>2017-11-23T03:45:00+05:30</updated><entry><title>Modern Django: Part 1: Setting up Django and React</title><link href="http://v1k45.com/blog/modern-django-part-1-setting-up-django-and-react/" rel="alternate"></link><published>2017-10-05T01:45:00+05:30</published><updated>2017-11-23T03:45:00+05:30</updated><author><name>Vikas Yadav</name></author><id>tag:v1k45.com,2017-10-05:/blog/modern-django-part-1-setting-up-django-and-react/</id><summary type="html">&lt;h3&gt;Introduction&lt;/h3&gt;
 &lt;p&gt;This will be a multi part tutorial series on how to create a "Modern" web application or SPA using Django and React.js.&lt;/p&gt;
 &lt;p&gt;We will create a Note taking Single Page Application which will be rendered by ReactJS with Django as an API backend. Let's call it "ponynote", because …&lt;/p&gt;</summary><content type="html">&lt;h3&gt;Introduction&lt;/h3&gt;
 &lt;p&gt;This will be a multi part tutorial series on how to create a "Modern" web application or SPA using Django and React.js.&lt;/p&gt;
@@ -242,6 +242,116 @@ $ npm run eject
 
 &lt;p&gt;This will render the following page:&lt;/p&gt;
 &lt;p&gt;&lt;img alt="Django and React welcome page" src="http://v1k45.com/images/modern-django-1-django-welcome.png"&gt;&lt;/p&gt;
+&lt;h3&gt;Production Setup&lt;/h3&gt;
+&lt;p&gt;Since this is a multi-part tutorial series, it might take some time until we reach part 4/5 where I intend to talk about deployment. I'm writing the webpack deployment guide here for people who don't want to wait until part 4 or they know react and they just need a deployable django + webpack setup.&lt;/p&gt;
+&lt;p&gt;The production setup is pretty similar to changes we did for development setup. We will edit some config values in the &lt;code&gt;webpack.config&lt;/code&gt; file.&lt;/p&gt;
+&lt;p&gt;Start with creating a &lt;code&gt;ponynote/production_settings.py&lt;/code&gt; file at the same level of your project &lt;code&gt;settings.py&lt;/code&gt;. For this project, the production server will use this settings file:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="kn"&gt;from&lt;/span&gt; &lt;span class="nn"&gt;.settings&lt;/span&gt; &lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="o"&gt;*&lt;/span&gt;
+
+&lt;span class="n"&gt;STATICFILES_DIRS&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="p"&gt;[&lt;/span&gt;
+    &lt;span class="n"&gt;os&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;path&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;join&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;BASE_DIR&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="s2"&gt;&amp;quot;assets&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;),&lt;/span&gt;
+&lt;span class="p"&gt;]&lt;/span&gt;
+
+&lt;span class="n"&gt;WEBPACK_LOADER&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+    &lt;span class="s1"&gt;&amp;#39;DEFAULT&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+            &lt;span class="s1"&gt;&amp;#39;BUNDLE_DIR_NAME&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="s1"&gt;&amp;#39;bundles/&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;
+            &lt;span class="s1"&gt;&amp;#39;STATS_FILE&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="n"&gt;os&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;path&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;join&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;BASE_DIR&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="s1"&gt;&amp;#39;webpack-stats.prod.json&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;),&lt;/span&gt;
+        &lt;span class="p"&gt;}&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;The above config tells django to look for static files in &lt;code&gt;assets&lt;/code&gt; directory of project root and use &lt;code&gt;webpack-stats.prod.json&lt;/code&gt; as webpack stats file.&lt;/p&gt;
+&lt;p&gt;After this, create a directory &lt;code&gt;assets/bundles/&lt;/code&gt; in your project root. This directory will store all our static assets. The bundles sub-directory will be used as build target. Webpack will save all the build file to &lt;code&gt;assets/bundles&lt;/code&gt;.&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;$ mkdir -p assets/bundles
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;After this the change webpack's build output dir to &lt;code&gt;assets/bundles&lt;/code&gt;. In &lt;code&gt;frontend/config/paths.js&lt;/code&gt; change the &lt;code&gt;appBuild&lt;/code&gt; value:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="c1"&gt;// config after eject: we&amp;#39;re in ./config/&lt;/span&gt;
+&lt;span class="nx"&gt;module&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="nx"&gt;exports&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+  &lt;span class="c1"&gt;// .. KEEP OTHER VALUES&lt;/span&gt;
+  &lt;span class="nx"&gt;appBuild&lt;/span&gt;&lt;span class="o"&gt;:&lt;/span&gt; &lt;span class="nx"&gt;resolveApp&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s1"&gt;&amp;#39;../assets/bundles/&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;),&lt;/span&gt;
+&lt;span class="p"&gt;};&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;Now in &lt;code&gt;frontend/config/webpack.config.prod.js&lt;/code&gt; do the following changes:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="kr"&gt;const&lt;/span&gt; &lt;span class="nx"&gt;BundleTracker&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="nx"&gt;require&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s1"&gt;&amp;#39;webpack-bundle-tracker&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;);&lt;/span&gt;
+
+&lt;span class="kr"&gt;const&lt;/span&gt; &lt;span class="nx"&gt;publicPath&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="s2"&gt;&amp;quot;/static/bundles/&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+
+&lt;span class="kr"&gt;const&lt;/span&gt; &lt;span class="nx"&gt;cssFilename&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="s1"&gt;&amp;#39;css/[name].[contenthash:8].css&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+
+&lt;span class="nx"&gt;module&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="nx"&gt;exports&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+  &lt;span class="c1"&gt;// KEEP OTHER VALUES&lt;/span&gt;
+  &lt;span class="nx"&gt;output&lt;/span&gt;&lt;span class="o"&gt;:&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+    &lt;span class="c1"&gt;// NEAR LINE 67&lt;/span&gt;
+
+    &lt;span class="c1"&gt;// Generated JS file names (with nested folders).&lt;/span&gt;
+    &lt;span class="c1"&gt;// There will be one main bundle, and one file per asynchronous chunk.&lt;/span&gt;
+    &lt;span class="c1"&gt;// We don&amp;#39;t currently advertise code splitting but Webpack supports it.&lt;/span&gt;
+    &lt;span class="nx"&gt;filename&lt;/span&gt;&lt;span class="o"&gt;:&lt;/span&gt; &lt;span class="s1"&gt;&amp;#39;js/[name].[chunkhash:8].js&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;
+    &lt;span class="nx"&gt;chunkFilename&lt;/span&gt;&lt;span class="o"&gt;:&lt;/span&gt; &lt;span class="s1"&gt;&amp;#39;js/[name].[chunkhash:8].chunk.js&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;
+  &lt;span class="p"&gt;},&lt;/span&gt;
+  &lt;span class="nx"&gt;module&lt;/span&gt;&lt;span class="o"&gt;:&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+    &lt;span class="c1"&gt;// .. KEEP OTHER VALUES, ONLY UPDATE THE FOLLOWING VALUES&lt;/span&gt;
+    &lt;span class="nx"&gt;rules&lt;/span&gt;&lt;span class="o"&gt;:&lt;/span&gt; &lt;span class="p"&gt;[&lt;/span&gt;
+      &lt;span class="p"&gt;{&lt;/span&gt;
+        &lt;span class="nx"&gt;oneOf&lt;/span&gt;&lt;span class="o"&gt;:&lt;/span&gt; &lt;span class="p"&gt;[&lt;/span&gt;
+          &lt;span class="c1"&gt;// LINE 140&lt;/span&gt;
+          &lt;span class="p"&gt;{&lt;/span&gt;
+            &lt;span class="nx"&gt;options&lt;/span&gt;&lt;span class="o"&gt;:&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+              &lt;span class="nx"&gt;limit&lt;/span&gt;&lt;span class="o"&gt;:&lt;/span&gt; &lt;span class="mi"&gt;10000&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;
+              &lt;span class="nx"&gt;name&lt;/span&gt;&lt;span class="o"&gt;:&lt;/span&gt; &lt;span class="s1"&gt;&amp;#39;media/[name].[hash:8].[ext]&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;
+            &lt;span class="p"&gt;},&lt;/span&gt;
+          &lt;span class="p"&gt;},&lt;/span&gt;
+          &lt;span class="p"&gt;{&lt;/span&gt;
+            &lt;span class="c1"&gt;// LINE 220&lt;/span&gt;
+            &lt;span class="nx"&gt;options&lt;/span&gt;&lt;span class="o"&gt;:&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+              &lt;span class="nx"&gt;name&lt;/span&gt;&lt;span class="o"&gt;:&lt;/span&gt; &lt;span class="s1"&gt;&amp;#39;media/[name].[hash:8].[ext]&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;
+            &lt;span class="p"&gt;},&lt;/span&gt;
+          &lt;span class="p"&gt;},&lt;/span&gt;
+        &lt;span class="p"&gt;],&lt;/span&gt;
+      &lt;span class="p"&gt;},&lt;/span&gt;
+    &lt;span class="p"&gt;],&lt;/span&gt;
+  &lt;span class="p"&gt;},&lt;/span&gt;
+  &lt;span class="nx"&gt;plugins&lt;/span&gt;&lt;span class="o"&gt;:&lt;/span&gt; &lt;span class="p"&gt;[&lt;/span&gt;
+    &lt;span class="c1"&gt;// KEEP OTHER VALUES&lt;/span&gt;
+    &lt;span class="c1"&gt;// LINE 320&lt;/span&gt;
+    &lt;span class="k"&gt;new&lt;/span&gt; &lt;span class="nx"&gt;BundleTracker&lt;/span&gt;&lt;span class="p"&gt;({&lt;/span&gt;&lt;span class="nx"&gt;path&lt;/span&gt;&lt;span class="o"&gt;:&lt;/span&gt; &lt;span class="nx"&gt;paths&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="nx"&gt;statsRoot&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="nx"&gt;filename&lt;/span&gt;&lt;span class="o"&gt;:&lt;/span&gt; &lt;span class="s1"&gt;&amp;#39;webpack-stats.prod.json&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;}),&lt;/span&gt;
+  &lt;span class="p"&gt;],&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;Here we configured webpack to set &lt;code&gt;static/bundles/&lt;/code&gt; as &lt;code&gt;publicPath&lt;/code&gt; because the build files will be stored in &lt;code&gt;assets/bundles&lt;/code&gt; and &lt;code&gt;/static/&lt;/code&gt; url points to the &lt;code&gt;assets&lt;/code&gt; directory. We also remove &lt;code&gt;static&lt;/code&gt; prefixes from filenames and path to prevent unnecessary nesting of build files. This will make webpack to build all files directory into &lt;code&gt;assets/bundles&lt;/code&gt; without creating an additional &lt;code&gt;static&lt;/code&gt; directory inside it.&lt;/p&gt;
+&lt;p&gt;After saving the file, we can build the javascript files using the following command:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;$ npm run build
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;This will create bunch of files in &lt;code&gt;assets/bundles&lt;/code&gt; and a &lt;code&gt;webpack-stats.prod.json&lt;/code&gt; file in the project root.&lt;/p&gt;
+&lt;p&gt;To check if everything was setup properly, we can run django server using production settings with webpack server stopped.&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;$ python manage.py runserver --settings&lt;span class="o"&gt;=&lt;/span&gt;ponynote.production_settings
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;If you check &lt;a href="http://localhost:8000/"&gt;http://localhost:8000/&lt;/a&gt;, you'll see the same page which was rendered when webpack server was running. If you check the source code of the webpage, you'll see the js files are now being served directly through django and not webpack.&lt;/p&gt;
+&lt;h4&gt;Important points&lt;/h4&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;It is better to build your js files on your CI server or your deployment server instead on including in version control or source code.&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Make sure you run &lt;code&gt;collectstatic&lt;/code&gt; after you &lt;code&gt;build&lt;/code&gt; the js files, otherwise your webserver won't be able to find the build files.&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Make sure your build generates a &lt;code&gt;webpack-stats.prod.json&lt;/code&gt; file. If you are deploy by building the files manually, make sure you also include it when you're copying files from your machine to server.&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;All the directory and file names specified above are not enforced in any senese. Feel free to change the directory location or file names to your liking. But make sure all config files are properly updated.&lt;/p&gt;
+&lt;h6&gt;&lt;/h6&gt;
 &lt;p&gt;That's all on how to setup react and django to work together. In next post we'll setup in-application routing using &lt;code&gt;react-router-dom&lt;/code&gt; and global state management using &lt;code&gt;redux&lt;/code&gt;.&lt;/p&gt;
 &lt;h3&gt;References&lt;/h3&gt;
 &lt;ul&gt;

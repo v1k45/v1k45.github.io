@@ -297,6 +297,116 @@ $ npm run eject
 
 <p>This will render the following page:</p>
 <p><img alt="Django and React welcome page" src="http://v1k45.com/images/modern-django-1-django-welcome.png"></p>
+<h3>Production Setup</h3>
+<p>Since this is a multi-part tutorial series, it might take some time until we reach part 4/5 where I intend to talk about deployment. I'm writing the webpack deployment guide here for people who don't want to wait until part 4 or they know react and they just need a deployable django + webpack setup.</p>
+<p>The production setup is pretty similar to changes we did for development setup. We will edit some config values in the <code>webpack.config</code> file.</p>
+<p>Start with creating a <code>ponynote/production_settings.py</code> file at the same level of your project <code>settings.py</code>. For this project, the production server will use this settings file:</p>
+<div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">.settings</span> <span class="kn">import</span> <span class="o">*</span>
+
+<span class="n">STATICFILES_DIRS</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">BASE_DIR</span><span class="p">,</span> <span class="s2">&quot;assets&quot;</span><span class="p">),</span>
+<span class="p">]</span>
+
+<span class="n">WEBPACK_LOADER</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;DEFAULT&#39;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s1">&#39;BUNDLE_DIR_NAME&#39;</span><span class="p">:</span> <span class="s1">&#39;bundles/&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;STATS_FILE&#39;</span><span class="p">:</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">BASE_DIR</span><span class="p">,</span> <span class="s1">&#39;webpack-stats.prod.json&#39;</span><span class="p">),</span>
+        <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>The above config tells django to look for static files in <code>assets</code> directory of project root and use <code>webpack-stats.prod.json</code> as webpack stats file.</p>
+<p>After this, create a directory <code>assets/bundles/</code> in your project root. This directory will store all our static assets. The bundles sub-directory will be used as build target. Webpack will save all the build file to <code>assets/bundles</code>.</p>
+<div class="highlight"><pre><span></span>$ mkdir -p assets/bundles
+</pre></div>
+
+
+<p>After this the change webpack's build output dir to <code>assets/bundles</code>. In <code>frontend/config/paths.js</code> change the <code>appBuild</code> value:</p>
+<div class="highlight"><pre><span></span><span class="c1">// config after eject: we&#39;re in ./config/</span>
+<span class="nx">module</span><span class="p">.</span><span class="nx">exports</span> <span class="o">=</span> <span class="p">{</span>
+  <span class="c1">// .. KEEP OTHER VALUES</span>
+  <span class="nx">appBuild</span><span class="o">:</span> <span class="nx">resolveApp</span><span class="p">(</span><span class="s1">&#39;../assets/bundles/&#39;</span><span class="p">),</span>
+<span class="p">};</span>
+</pre></div>
+
+
+<p>Now in <code>frontend/config/webpack.config.prod.js</code> do the following changes:</p>
+<div class="highlight"><pre><span></span><span class="kr">const</span> <span class="nx">BundleTracker</span> <span class="o">=</span> <span class="nx">require</span><span class="p">(</span><span class="s1">&#39;webpack-bundle-tracker&#39;</span><span class="p">);</span>
+
+<span class="kr">const</span> <span class="nx">publicPath</span> <span class="o">=</span> <span class="s2">&quot;/static/bundles/&quot;</span><span class="p">;</span>
+
+<span class="kr">const</span> <span class="nx">cssFilename</span> <span class="o">=</span> <span class="s1">&#39;css/[name].[contenthash:8].css&#39;</span><span class="p">;</span>
+
+<span class="nx">module</span><span class="p">.</span><span class="nx">exports</span> <span class="o">=</span> <span class="p">{</span>
+  <span class="c1">// KEEP OTHER VALUES</span>
+  <span class="nx">output</span><span class="o">:</span> <span class="p">{</span>
+    <span class="c1">// NEAR LINE 67</span>
+
+    <span class="c1">// Generated JS file names (with nested folders).</span>
+    <span class="c1">// There will be one main bundle, and one file per asynchronous chunk.</span>
+    <span class="c1">// We don&#39;t currently advertise code splitting but Webpack supports it.</span>
+    <span class="nx">filename</span><span class="o">:</span> <span class="s1">&#39;js/[name].[chunkhash:8].js&#39;</span><span class="p">,</span>
+    <span class="nx">chunkFilename</span><span class="o">:</span> <span class="s1">&#39;js/[name].[chunkhash:8].chunk.js&#39;</span><span class="p">,</span>
+  <span class="p">},</span>
+  <span class="nx">module</span><span class="o">:</span> <span class="p">{</span>
+    <span class="c1">// .. KEEP OTHER VALUES, ONLY UPDATE THE FOLLOWING VALUES</span>
+    <span class="nx">rules</span><span class="o">:</span> <span class="p">[</span>
+      <span class="p">{</span>
+        <span class="nx">oneOf</span><span class="o">:</span> <span class="p">[</span>
+          <span class="c1">// LINE 140</span>
+          <span class="p">{</span>
+            <span class="nx">options</span><span class="o">:</span> <span class="p">{</span>
+              <span class="nx">limit</span><span class="o">:</span> <span class="mi">10000</span><span class="p">,</span>
+              <span class="nx">name</span><span class="o">:</span> <span class="s1">&#39;media/[name].[hash:8].[ext]&#39;</span><span class="p">,</span>
+            <span class="p">},</span>
+          <span class="p">},</span>
+          <span class="p">{</span>
+            <span class="c1">// LINE 220</span>
+            <span class="nx">options</span><span class="o">:</span> <span class="p">{</span>
+              <span class="nx">name</span><span class="o">:</span> <span class="s1">&#39;media/[name].[hash:8].[ext]&#39;</span><span class="p">,</span>
+            <span class="p">},</span>
+          <span class="p">},</span>
+        <span class="p">],</span>
+      <span class="p">},</span>
+    <span class="p">],</span>
+  <span class="p">},</span>
+  <span class="nx">plugins</span><span class="o">:</span> <span class="p">[</span>
+    <span class="c1">// KEEP OTHER VALUES</span>
+    <span class="c1">// LINE 320</span>
+    <span class="k">new</span> <span class="nx">BundleTracker</span><span class="p">({</span><span class="nx">path</span><span class="o">:</span> <span class="nx">paths</span><span class="p">.</span><span class="nx">statsRoot</span><span class="p">,</span> <span class="nx">filename</span><span class="o">:</span> <span class="s1">&#39;webpack-stats.prod.json&#39;</span><span class="p">}),</span>
+  <span class="p">],</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>Here we configured webpack to set <code>static/bundles/</code> as <code>publicPath</code> because the build files will be stored in <code>assets/bundles</code> and <code>/static/</code> url points to the <code>assets</code> directory. We also remove <code>static</code> prefixes from filenames and path to prevent unnecessary nesting of build files. This will make webpack to build all files directory into <code>assets/bundles</code> without creating an additional <code>static</code> directory inside it.</p>
+<p>After saving the file, we can build the javascript files using the following command:</p>
+<div class="highlight"><pre><span></span>$ npm run build
+</pre></div>
+
+
+<p>This will create bunch of files in <code>assets/bundles</code> and a <code>webpack-stats.prod.json</code> file in the project root.</p>
+<p>To check if everything was setup properly, we can run django server using production settings with webpack server stopped.</p>
+<div class="highlight"><pre><span></span>$ python manage.py runserver --settings<span class="o">=</span>ponynote.production_settings
+</pre></div>
+
+
+<p>If you check <a href="http://localhost:8000/">http://localhost:8000/</a>, you'll see the same page which was rendered when webpack server was running. If you check the source code of the webpage, you'll see the js files are now being served directly through django and not webpack.</p>
+<h4>Important points</h4>
+<ul>
+<li>
+<p>It is better to build your js files on your CI server or your deployment server instead on including in version control or source code.</p>
+</li>
+<li>
+<p>Make sure you run <code>collectstatic</code> after you <code>build</code> the js files, otherwise your webserver won't be able to find the build files.</p>
+</li>
+<li>
+<p>Make sure your build generates a <code>webpack-stats.prod.json</code> file. If you are deploy by building the files manually, make sure you also include it when you're copying files from your machine to server.</p>
+</li>
+</ul>
+<p>All the directory and file names specified above are not enforced in any senese. Feel free to change the directory location or file names to your liking. But make sure all config files are properly updated.</p>
+<h6></h6>
 <p>That's all on how to setup react and django to work together. In next post we'll setup in-application routing using <code>react-router-dom</code> and global state management using <code>redux</code>.</p>
 <h3>References</h3>
 <ul>
@@ -308,8 +418,8 @@ $ npm run eject
     </div>
     <footer>
     <hr/>
-    <time datetime="2017-10-31T23:30:00+05:30">
-      Last Updated: Tue 31 October 2017
+    <time datetime="2017-11-23T03:45:00+05:30">
+      Last Updated: Thu 23 November 2017
     </time>
 	<br />
       Posted in: <a href="http://v1k45.com/blog/categories/web-development/">Web Development</a>
