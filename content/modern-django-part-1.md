@@ -1,6 +1,6 @@
 Title: Modern Django: Part 1: Setting up Django and React
 Date: 2017-10-05 01:45
-Modified: 2017-10-31 23:30
+Modified: 2017-11-23 03:45
 Category: Web Development
 Tags: python, django, javascript, js, react
 
@@ -301,6 +301,129 @@ export default App;
 This will render the following page:
 
 ![Django and React welcome page]({filename}/images/modern-django-1-django-welcome.png)
+
+
+### Production Setup
+
+Since this is a multi-part tutorial series, it might take some time until we reach part 4/5 where I intend to talk about deployment. I'm writing the webpack deployment guide here for people who don't want to wait until part 4 or they know react and they just need a deployable django + webpack setup.
+
+The production setup is pretty similar to changes we did for development setup. We will edit some config values in the `webpack.config` file.
+
+Start with creating a `ponynote/production_settings.py` file at the same level of your project `settings.py`. For this project, the production server will use this settings file:
+
+```
+from .settings import *
+
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, "assets"),
+]
+
+WEBPACK_LOADER = {
+    'DEFAULT': {
+            'BUNDLE_DIR_NAME': 'bundles/',
+            'STATS_FILE': os.path.join(BASE_DIR, 'webpack-stats.prod.json'),
+        }
+}
+```
+
+The above config tells django to look for static files in `assets` directory of project root and use `webpack-stats.prod.json` as webpack stats file.
+
+After this, create a directory `assets/bundles/` in your project root. This directory will store all our static assets. The bundles sub-directory will be used as build target. Webpack will save all the build file to `assets/bundles`.
+
+```
+$ mkdir -p assets/bundles
+```
+
+After this the change webpack's build output dir to `assets/bundles`. In `frontend/config/paths.js` change the `appBuild` value:
+
+```js
+// config after eject: we're in ./config/
+module.exports = {
+  // .. KEEP OTHER VALUES
+  appBuild: resolveApp('../assets/bundles/'),
+};
+```
+
+Now in `frontend/config/webpack.config.prod.js` do the following changes:
+
+```js
+const BundleTracker = require('webpack-bundle-tracker');
+
+const publicPath = "/static/bundles/";
+
+const cssFilename = 'css/[name].[contenthash:8].css';
+
+module.exports = {
+  // KEEP OTHER VALUES
+  output: {
+	// NEAR LINE 67
+
+    // Generated JS file names (with nested folders).
+    // There will be one main bundle, and one file per asynchronous chunk.
+    // We don't currently advertise code splitting but Webpack supports it.
+    filename: 'js/[name].[chunkhash:8].js',
+    chunkFilename: 'js/[name].[chunkhash:8].chunk.js',
+  },
+  module: {
+	// .. KEEP OTHER VALUES, ONLY UPDATE THE FOLLOWING VALUES
+    rules: [
+      {
+        oneOf: [
+		  // LINE 140
+          {
+            options: {
+              limit: 10000,
+              name: 'media/[name].[hash:8].[ext]',
+            },
+          },
+          {
+			// LINE 220
+            options: {
+              name: 'media/[name].[hash:8].[ext]',
+            },
+          },
+        ],
+      },
+    ],
+  },
+  plugins: [
+	// KEEP OTHER VALUES
+	// LINE 320
+    new BundleTracker({path: paths.statsRoot, filename: 'webpack-stats.prod.json'}),
+  ],
+}
+```
+
+Here we configured webpack to set `static/bundles/` as `publicPath` because the build files will be stored in `assets/bundles` and `/static/` url points to the `assets` directory. We also remove `static` prefixes from filenames and path to prevent unnecessary nesting of build files. This will make webpack to build all files directory into `assets/bundles` without creating an additional `static` directory inside it.
+
+After saving the file, we can build the javascript files using the following command:
+
+```
+$ npm run build
+```
+
+This will create bunch of files in `assets/bundles` and a `webpack-stats.prod.json` file in the project root.
+
+To check if everything was setup properly, we can run django server using production settings with webpack server stopped.
+
+```
+$ python manage.py runserver --settings=ponynote.production_settings
+```
+
+If you check [http://localhost:8000/](http://localhost:8000/), you'll see the same page which was rendered when webpack server was running. If you check the source code of the webpage, you'll see the js files are now being served directly through django and not webpack.
+
+#### Important points
+
+- It is better to build your js files on your CI server or your deployment server instead on including in version control or source code.
+
+- Make sure you run `collectstatic` after you `build` the js files, otherwise your webserver won't be able to find the build files.
+
+- Make sure your build generates a `webpack-stats.prod.json` file. If you are deploy by building the files manually, make sure you also include it when you're copying files from your machine to server.
+
+
+All the directory and file names specified above are not enforced in any senese. Feel free to change the directory location or file names to your liking. But make sure all config files are properly updated.
+
+#############
 
 That's all on how to setup react and django to work together. In next post we'll setup in-application routing using `react-router-dom` and global state management using `redux`.
 
