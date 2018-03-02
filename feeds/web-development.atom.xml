@@ -793,7 +793,7 @@ $ npm run eject
 &lt;/ul&gt;
 &lt;p&gt;All the directory and file names specified above are not enforced in any senese. Feel free to change the directory location or file names to your liking. But make sure all config files are properly updated.&lt;/p&gt;
 &lt;h6&gt;&lt;/h6&gt;
-&lt;p&gt;That's all on how to setup react and django to work together. In next post we'll setup in-application routing using &lt;code&gt;react-router-dom&lt;/code&gt; and global state management using &lt;code&gt;redux&lt;/code&gt;.&lt;/p&gt;
+&lt;p&gt;That's all on how to setup react and django to work together. In &lt;a href="http://v1k45.com/blog/modern-django-part-2-redux-and-react-router-setup/"&gt;next post&lt;/a&gt; we'll setup in-application routing using &lt;code&gt;react-router-dom&lt;/code&gt; and global state management using &lt;code&gt;redux&lt;/code&gt;.&lt;/p&gt;
 &lt;h3&gt;References&lt;/h3&gt;
 &lt;ul&gt;
 &lt;li&gt;&lt;a href="http://owaislone.org/blog/webpack-plus-reactjs-and-django/"&gt;Using Webpack transparently with Django&lt;/a&gt;&lt;/li&gt;
