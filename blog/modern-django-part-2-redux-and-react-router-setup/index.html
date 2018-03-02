@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+  			<title>Modern Django: Part 2: Redux and React Router setup &mdash; v1k45</title>
+			<meta charset="utf-8" />
+			<meta name="viewport" content="width=device-width" />
+
+			<link href="http://v1k45.com/feeds/all.atom.xml" type="application/atom+xml" rel="alternate" title="v1k45 Full Atom Feed" />
+			<link href="http://v1k45.com/feeds/web-development.atom.xml" type="application/atom+xml" rel="alternate" title="v1k45 Categories Atom Feed" />
+
+			<link rel="stylesheet" href="/theme/css/sakura-dark.css" type="text/css" media="screen" title="no title" charset="utf-8">
+			<link rel="stylesheet" href="/theme/css/pygment.css" type="text/css" media="screen" title="no title" charset="utf-8">
+
+
+
+
+    <meta name="tags" content="javascript" />
+    <meta name="tags" content="js" />
+    <meta name="tags" content="react" />
+    <meta name="tags" content="redux" />
+    <meta name="tags" content="react-router" />
+
+
+		<style type="text/css" media="screen">
+			body {
+				font-family: "Helivetica Neue",Helvetica,arial,sans-serif;
+			}
+		</style>
+	</head>
+
+	<body>
+        <header>
+			<nav>
+				<a href="/">v1k45</a>
+				[
+						<a href=/>about</a>,&nbsp;
+
+						<a href=/blog/>blog</a>
+							,&nbsp;
+						<a href=https://github.com/v1k45>github</a>
+							,&nbsp;
+						<a href=http://stackoverflow.com/users/4726598/v1k45>stackoverflow</a>
+				]
+			</nav>
+        </header>
+		<main>
+  <section id="content">
+    <header>
+    <h2>
+      <a href="http://v1k45.com/blog/modern-django-part-2-redux-and-react-router-setup/" rel="bookmark"
+       title="Permalink to Modern Django: Part 2: Redux and React Router setup">Modern Django: Part 2: Redux and React Router setup</a></h2>
+    </header>
+    <footer>
+    <time datetime="2018-03-02T13:30:00+05:30">
+        Fri 02 March 2018
+    </time>
+    </footer>
+    <div>
+    <p>This is the second part of the tutorial series on how to create a "Modern" web application or SPA using Django and React.js</p>
+<p>In this part, we'll setup redux and react router in our note taking application. And later connect this frontend to a API backend.</p>
+<p>The code for this repository is hosted on my github, <a href="https://github.com/v1k45/ponynote">v1k45/ponynote</a>. You can checkout <code>part-2</code> branch to all the changes done till the end of this part.</p>
+<h3>What is react router?</h3>
+<p><a href="https://reacttraining.com/react-router/web">React-router-dom</a> is a library which is used for in-application routing in react applications. Using it you can mount components on urls of your choice.</p>
+<p>We'll first create router for our application with relevant routes. Since this is a basic note-taking application, just one component/route should suffice but we'll still create few other components and routes for demonstration.</p>
+<h4>Setup react-router-dom</h4>
+<p>Start by installing react-router-dom:</p>
+<div class="highlight"><pre><span></span>$ <span class="nb">cd</span> ponynote/frontend
+$ npm install --save react-router-dom
+</pre></div>
+
+
+<p>After this let us create few components which we will be using in the application. To maintain a clean directory structure we'll create all components inside components directory. We will create a <code>PonyNote</code> component for our main app and <code>NotFound</code> component for 404 pages.</p>
+<div class="highlight"><pre><span></span>$ <span class="nb">cd</span> src/
+$ mkdir components/
+$ touch components/index.js
+$ touch components/PonyNote.jsx
+$ touch components/NotFound.jsx
+</pre></div>
+
+
+<p>Now that we have all our files created, update the <code>App.js</code> file to use <code>react-router-dom</code>:</p>
+<div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">React</span><span class="o">,</span> <span class="p">{</span> <span class="n">Component</span> <span class="p">}</span> <span class="kn">from</span> <span class="s1">&#39;react&#39;</span><span class="p">;</span>
+<span class="kn">import</span> <span class="p">{</span><span class="n">Route</span><span class="p">,</span> <span class="n">Switch</span><span class="p">,</span> <span class="n">BrowserRouter</span><span class="p">}</span> <span class="kn">from</span> <span class="s1">&#39;react-router-dom&#39;</span><span class="p">;</span>
+<span class="kn">import</span> <span class="nn">PonyNote</span> <span class="nn">from</span> <span class="s2">&quot;./components/PonyNote&quot;</span><span class="p">;</span>
+<span class="kn">import</span> <span class="nn">NotFound</span> <span class="nn">from</span> <span class="s2">&quot;./components/NotFound&quot;</span><span class="p">;</span>
+
+<span class="k">class</span> <span class="nc">App</span> <span class="n">extends</span> <span class="n">Component</span> <span class="p">{</span>
+  <span class="n">render</span><span class="p">()</span> <span class="p">{</span>
+  <span class="k">return</span> <span class="p">(</span>
+    <span class="o">&lt;</span><span class="n">BrowserRouter</span><span class="o">&gt;</span>
+    <span class="o">&lt;</span><span class="n">Switch</span><span class="o">&gt;</span>
+      <span class="o">&lt;</span><span class="n">Route</span> <span class="n">exact</span> <span class="n">path</span><span class="o">=</span><span class="s2">&quot;/&quot;</span> <span class="n">component</span><span class="o">=</span><span class="p">{</span><span class="n">PonyNote</span><span class="p">}</span> <span class="o">/&gt;</span>
+      <span class="o">&lt;</span><span class="n">Route</span> <span class="n">component</span><span class="o">=</span><span class="p">{</span><span class="n">NotFound</span><span class="p">}</span> <span class="o">/&gt;</span>
+    <span class="o">&lt;/</span><span class="n">Switch</span><span class="o">&gt;</span>
+    <span class="o">&lt;/</span><span class="n">BrowserRouter</span><span class="o">&gt;</span>
+  <span class="p">);</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="n">export</span> <span class="n">default</span> <span class="n">App</span><span class="p">;</span>
+</pre></div>
+
+
+<p>The above code will make use of <a href="https://reacttraining.com/react-router/web/api/BrowserRouter"><code>BrowserRouter</code></a>, which means it will use the HTML5 history API to maintain the application routing. The <a href="https://reacttraining.com/react-router/web/api/Switch"><code>Switch</code></a> component is optional, but it is used for efficient routing. The <a href="https://reacttraining.com/react-router/web/api/Route"><code>Route</code></a> components renders the target component when the location of the application matches it's path. If no path is specified to the <code>Route</code>, all path matches return true, which is useful for 404 pages.</p>
+<p>Now that our component is ready, we can update our components to show actual content.</p>
+<p>In the <code>PonyNote.jsx</code>:</p>
+<div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">React</span><span class="o">,</span> <span class="p">{</span> <span class="n">Component</span> <span class="p">}</span> <span class="kn">from</span> <span class="s1">&#39;react&#39;</span><span class="p">;</span>
+<span class="kn">import</span> <span class="p">{</span><span class="n">Link</span><span class="p">}</span> <span class="kn">from</span> <span class="s1">&#39;react-router-dom&#39;</span><span class="p">;</span>
+
+
+<span class="n">export</span> <span class="n">default</span> <span class="k">class</span> <span class="nc">PonyNote</span> <span class="n">extends</span> <span class="n">Component</span> <span class="p">{</span>
+  <span class="n">render</span><span class="p">()</span> <span class="p">{</span>
+  <span class="k">return</span> <span class="p">(</span>
+    <span class="o">&lt;</span><span class="n">div</span><span class="o">&gt;</span>
+    <span class="o">&lt;</span><span class="n">h2</span><span class="o">&gt;</span><span class="n">Welcome</span> <span class="n">to</span> <span class="n">PonyNote</span><span class="err">!</span><span class="o">&lt;/</span><span class="n">h2</span><span class="o">&gt;</span>
+    <span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;</span>
+      <span class="o">&lt;</span><span class="n">Link</span> <span class="n">to</span><span class="o">=</span><span class="s2">&quot;/contact&quot;</span><span class="o">&gt;</span><span class="n">Click</span> <span class="n">Here</span><span class="o">&lt;/</span><span class="n">Link</span><span class="o">&gt;</span> <span class="n">to</span> <span class="n">contact</span> <span class="n">us</span><span class="err">!</span>
+    <span class="o">&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
+    <span class="o">&lt;/</span><span class="n">div</span><span class="o">&gt;</span>
+  <span class="p">)</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>This will display a welcome message and a link to contact page (which does not exist), which will show the NotFound component.</p>
+<p>In the <code>NotFound.jsx</code> file:</p>
+<div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">React</span> <span class="nn">from</span> <span class="s1">&#39;react&#39;</span><span class="p">;</span>
+
+
+<span class="n">const</span> <span class="n">NotFound</span> <span class="o">=</span> <span class="p">()</span> <span class="o">=&gt;</span> <span class="p">{</span>
+  <span class="k">return</span> <span class="p">(</span>
+  <span class="o">&lt;</span><span class="n">div</span><span class="o">&gt;</span>
+    <span class="o">&lt;</span><span class="n">h2</span><span class="o">&gt;</span><span class="n">Not</span> <span class="n">Found</span><span class="o">&lt;/</span><span class="n">h2</span><span class="o">&gt;</span>
+    <span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;</span><span class="n">The</span> <span class="n">page</span> <span class="n">you</span><span class="s1">&#39;re looking for does not exists.&lt;/p&gt;</span>
+  <span class="o">&lt;/</span><span class="n">div</span><span class="o">&gt;</span>
+  <span class="p">)</span>
+<span class="p">}</span>
+
+<span class="n">export</span> <span class="n">default</span> <span class="n">NotFound</span>
+</pre></div>
+
+
+<p>After this, start django development server and webpack hotloader:</p>
+<div class="highlight"><pre><span></span>(ponynote) $ ./manage.py runserver
+$ cd frontend &amp;&amp; npm run start
+</pre></div>
+
+
+<p>You should see the following page in your browser:</p>
+<p><img alt="React router example welcome page" src="http://v1k45.com/images/modern-django-2-rrd-welcome.png"></p>
+<p>And when clicked on the contact link, you should get the 404 page:</p>
+<p><img alt="React router example 404 page" src="http://v1k45.com/images/modern-django-2-rrd-404.png"></p>
+<p>And you'll be able to browse back to previous page using the "Back" button in your browser.</p>
+<h3>What is Redux?</h3>
+<p><a href="https://redux.js.org/">Redux</a> is a global application state management library based on <a href="http://facebook.github.io/flux/">Flux</a> architecture of unidirectional data flow.</p>
+<p>There are three major components in redux: <a href="https://redux.js.org/basics/actions">actions</a>, <a href="https://redux.js.org/basics/reducers">reducers</a> and <a href="https://redux.js.org/basics/store">store</a>.</p>
+<p><img alt="Redux flow chart" src="http://v1k45.com/images/modern-django-2-redux-flow.png"></p>
+<ul>
+<li>
+<p>Actions are payloads which are sent from your application to the redux store. They are the <em>only</em> source of information for the store.</p>
+</li>
+<li>
+<p>Reducers specify how the application state changes in response to the dispatched actions it receives.</p>
+</li>
+<li>
+<p>Store holds the state tree of the whole application. It is an object with methods to get the state and dispatch actions to perform state changes.</p>
+</li>
+</ul>
+<h4>Setup redux</h4>
+<p>First install <code>react-redux</code>:</p>
+<div class="highlight"><pre><span></span>$ npm install --save redux react-redux
+</pre></div>
+
+
+<p>After installation, create directories for actions and reducers:</p>
+<div class="highlight"><pre><span></span>$ mkdir actions reducers
+</pre></div>
+
+
+<p>Create empty action and reducers files:</p>
+<div class="highlight"><pre><span></span>$ touch actions/index.js reducers/index.js
+$ touch actions/notes.js reducers/notes.js
+</pre></div>
+
+
+<p>After the files are created, lets create our first reducer! Open <code>reducers/notes.js</code> and write the following code:</p>
+<div class="highlight"><pre><span></span><span class="kr">const</span> <span class="nx">initialState</span> <span class="o">=</span> <span class="p">[</span>
+  <span class="p">{</span><span class="nx">text</span><span class="o">:</span> <span class="s2">&quot;Write code!&quot;</span><span class="p">}</span>
+<span class="p">];</span>
+
+
+<span class="kr">export</span> <span class="k">default</span> <span class="kd">function</span> <span class="nx">notes</span><span class="p">(</span><span class="nx">state</span><span class="o">=</span><span class="nx">initialState</span><span class="p">,</span> <span class="nx">action</span><span class="p">)</span> <span class="p">{</span>
+  <span class="k">switch</span> <span class="p">(</span><span class="nx">action</span><span class="p">.</span><span class="nx">type</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">default</span><span class="o">:</span>
+      <span class="k">return</span> <span class="nx">state</span><span class="p">;</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>The <code>initialState</code> is the initial application state for notes (duh!). The <code>notes</code> function is a reducer, it takes state and action as argument. We have defined one note for now.</p>
+<p>Note that the <code>initialState</code> can be any valid javascript type. For our use case we are directly using Array but most commonly the state is defined as a Javascript object.</p>
+<p>A common way of creating a reducers is to have a switch statement which handles all types of actions using case label. For now, lets return the current application state as default with no cases.</p>
+<p>After this reducer is created we need to use in our application using redux store. For this, first edit <code>reducers/index.js</code>:</p>
+<div class="highlight"><pre><span></span><span class="kn">import</span> <span class="p">{</span> <span class="n">combineReducers</span> <span class="p">}</span> <span class="kn">from</span> <span class="s1">&#39;redux&#39;</span><span class="p">;</span>
+<span class="kn">import</span> <span class="nn">notes</span> <span class="nn">from</span> <span class="s2">&quot;./notes&quot;</span><span class="p">;</span>
+
+
+<span class="n">const</span> <span class="n">ponyApp</span> <span class="o">=</span> <span class="n">combineReducers</span><span class="p">({</span>
+  <span class="n">notes</span><span class="p">,</span>
+<span class="p">})</span>
+
+<span class="n">export</span> <span class="n">default</span> <span class="n">ponyApp</span><span class="p">;</span>
+</pre></div>
+
+
+<p>Using the above code we can combine multiple reducers into one. We don't need this in our application but for real world applications with lots of reducers, this comes handy.</p>
+<p>Now we need to create a redux store using this reducer. In <code>App.js</code> create a store:</p>
+<div class="highlight"><pre><span></span><span class="kn">import</span> <span class="p">{</span> <span class="n">createStore</span> <span class="p">}</span> <span class="kn">from</span> <span class="s2">&quot;redux&quot;</span><span class="p">;</span>
+<span class="kn">import</span> <span class="nn">ponyApp</span> <span class="nn">from</span> <span class="s2">&quot;./reducers&quot;</span><span class="p">;</span>
+
+<span class="n">let</span> <span class="n">store</span> <span class="o">=</span> <span class="n">createStore</span><span class="p">(</span><span class="n">ponyApp</span><span class="p">);</span>
+</pre></div>
+
+
+<p>After creating store, we need to wrap our react application's root component with <code>react-redux</code>'s <code>Provider</code> component and pass <code>store</code> to it in order to use the redux store. The final App.js will look like this:</p>
+<div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">React</span><span class="o">,</span> <span class="p">{</span> <span class="n">Component</span> <span class="p">}</span> <span class="kn">from</span> <span class="s1">&#39;react&#39;</span><span class="p">;</span>
+<span class="kn">import</span> <span class="p">{</span><span class="n">Route</span><span class="p">,</span> <span class="n">Switch</span><span class="p">,</span> <span class="n">BrowserRouter</span><span class="p">}</span> <span class="kn">from</span> <span class="s1">&#39;react-router-dom&#39;</span><span class="p">;</span>
+
+<span class="kn">import</span> <span class="p">{</span> <span class="n">Provider</span> <span class="p">}</span> <span class="kn">from</span> <span class="s2">&quot;react-redux&quot;</span><span class="p">;</span>
+<span class="kn">import</span> <span class="p">{</span> <span class="n">createStore</span> <span class="p">}</span> <span class="kn">from</span> <span class="s2">&quot;redux&quot;</span><span class="p">;</span>
+<span class="kn">import</span> <span class="nn">ponyApp</span> <span class="nn">from</span> <span class="s2">&quot;./reducers&quot;</span><span class="p">;</span>
+
+<span class="kn">import</span> <span class="nn">PonyNote</span> <span class="nn">from</span> <span class="s2">&quot;./components/PonyNote&quot;</span><span class="p">;</span>
+<span class="kn">import</span> <span class="nn">NotFound</span> <span class="nn">from</span> <span class="s2">&quot;./components/NotFound&quot;</span><span class="p">;</span>
+
+<span class="n">let</span> <span class="n">store</span> <span class="o">=</span> <span class="n">createStore</span><span class="p">(</span><span class="n">ponyApp</span><span class="p">);</span>
+
+<span class="k">class</span> <span class="nc">App</span> <span class="n">extends</span> <span class="n">Component</span> <span class="p">{</span>
+  <span class="n">render</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="p">(</span>
+      <span class="o">&lt;</span><span class="n">Provider</span> <span class="n">store</span><span class="o">=</span><span class="p">{</span><span class="n">store</span><span class="p">}</span><span class="o">&gt;</span>
+        <span class="o">&lt;</span><span class="n">BrowserRouter</span><span class="o">&gt;</span>
+          <span class="o">&lt;</span><span class="n">Switch</span><span class="o">&gt;</span>
+            <span class="o">&lt;</span><span class="n">Route</span> <span class="n">exact</span> <span class="n">path</span><span class="o">=</span><span class="s2">&quot;/&quot;</span> <span class="n">component</span><span class="o">=</span><span class="p">{</span><span class="n">PonyNote</span><span class="p">}</span> <span class="o">/&gt;</span>
+            <span class="o">&lt;</span><span class="n">Route</span> <span class="n">component</span><span class="o">=</span><span class="p">{</span><span class="n">NotFound</span><span class="p">}</span> <span class="o">/&gt;</span>
+          <span class="o">&lt;/</span><span class="n">Switch</span><span class="o">&gt;</span>
+        <span class="o">&lt;/</span><span class="n">BrowserRouter</span><span class="o">&gt;</span>
+      <span class="o">&lt;/</span><span class="n">Provider</span><span class="o">&gt;</span>
+    <span class="p">);</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="n">export</span> <span class="n">default</span> <span class="n">App</span><span class="p">;</span>
+</pre></div>
+
+
+<h4>Redux in action</h4>
+<p>Now that all setup for redux is done, we can use our redux state in the <code>PonyNote</code> component. Connect the <code>PonyNote</code> component with redux store to display notes on the web app:</p>
+<div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">React</span><span class="o">,</span> <span class="p">{</span> <span class="n">Component</span> <span class="p">}</span> <span class="kn">from</span> <span class="s1">&#39;react&#39;</span><span class="p">;</span>
+<span class="kn">import</span> <span class="p">{</span><span class="n">connect</span><span class="p">}</span> <span class="kn">from</span> <span class="s1">&#39;react-redux&#39;</span><span class="p">;</span>
+
+
+<span class="k">class</span> <span class="nc">PonyNote</span> <span class="n">extends</span> <span class="n">Component</span> <span class="p">{</span>
+  <span class="n">render</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="p">(</span>
+      <span class="o">&lt;</span><span class="n">div</span><span class="o">&gt;</span>
+        <span class="o">&lt;</span><span class="n">h2</span><span class="o">&gt;</span><span class="n">Welcome</span> <span class="n">to</span> <span class="n">PonyNote</span><span class="err">!</span><span class="o">&lt;/</span><span class="n">h2</span><span class="o">&gt;</span>
+        <span class="o">&lt;</span><span class="n">hr</span> <span class="o">/&gt;</span>
+
+        <span class="o">&lt;</span><span class="n">h3</span><span class="o">&gt;</span><span class="n">Notes</span><span class="o">&lt;/</span><span class="n">h3</span><span class="o">&gt;</span>
+        <span class="o">&lt;</span><span class="n">table</span><span class="o">&gt;</span>
+          <span class="o">&lt;</span><span class="n">tbody</span><span class="o">&gt;</span>
+            <span class="p">{</span><span class="n">this</span><span class="o">.</span><span class="n">props</span><span class="o">.</span><span class="n">notes</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="n">note</span> <span class="o">=&gt;</span> <span class="p">(</span>
+              <span class="o">&lt;</span><span class="n">tr</span><span class="o">&gt;</span>
+                <span class="o">&lt;</span><span class="n">td</span><span class="o">&gt;</span><span class="p">{</span><span class="n">note</span><span class="o">.</span><span class="n">text</span><span class="p">}</span><span class="o">&lt;/</span><span class="n">td</span><span class="o">&gt;</span>
+                <span class="o">&lt;</span><span class="n">td</span><span class="o">&gt;&lt;</span><span class="n">button</span><span class="o">&gt;</span><span class="n">edit</span><span class="o">&lt;/</span><span class="n">button</span><span class="o">&gt;&lt;/</span><span class="n">td</span><span class="o">&gt;</span>
+                <span class="o">&lt;</span><span class="n">td</span><span class="o">&gt;&lt;</span><span class="n">button</span><span class="o">&gt;</span><span class="n">delete</span><span class="o">&lt;/</span><span class="n">button</span><span class="o">&gt;&lt;/</span><span class="n">td</span><span class="o">&gt;</span>
+              <span class="o">&lt;/</span><span class="n">tr</span><span class="o">&gt;</span>
+            <span class="p">))}</span>
+          <span class="o">&lt;/</span><span class="n">tbody</span><span class="o">&gt;</span>
+        <span class="o">&lt;/</span><span class="n">table</span><span class="o">&gt;</span>
+      <span class="o">&lt;/</span><span class="n">div</span><span class="o">&gt;</span>
+    <span class="p">)</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+
+
+<span class="n">const</span> <span class="n">mapStateToProps</span> <span class="o">=</span> <span class="n">state</span> <span class="o">=&gt;</span> <span class="p">{</span>
+  <span class="k">return</span> <span class="p">{</span>
+    <span class="n">notes</span><span class="p">:</span> <span class="n">state</span><span class="o">.</span><span class="n">notes</span><span class="p">,</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="n">const</span> <span class="n">mapDispatchToProps</span> <span class="o">=</span> <span class="n">dispatch</span> <span class="o">=&gt;</span> <span class="p">{</span>
+  <span class="k">return</span> <span class="p">{</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+
+
+<span class="n">export</span> <span class="n">default</span> <span class="n">connect</span><span class="p">(</span><span class="n">mapStateToProps</span><span class="p">,</span> <span class="n">mapDispatchToProps</span><span class="p">)(</span><span class="n">PonyNote</span><span class="p">);</span>
+</pre></div>
+
+
+<p>In the above code we "connect" our component using the <code>connect</code> high order function provided by <code>react-redux</code>. <code>mapStateToProps</code> is used to "map" the application state to the "props" of the component. Here, we are passing the notes array as a component prop with same name. <code>mapDispatchToProps</code> is "map" action dispatcher functions to component "props".</p>
+<p>Inside the render function we have created a table and iterated all notes with placeholder edit and delete button. The above code should result in a webpage like this:</p>
+<p><img alt="Redux sample component" src="http://v1k45.com/images/modern-django-2-redux-in-action.png"></p>
+<h4>Working with redux states using actions</h4>
+<p>Now that we have a read-only implementation of our note-taking app which just displays notes. We will now create actions, reducer cases and UI element to modify the redux state.</p>
+<h5>Defining actions and reducers</h5>
+<p>In <code>reducers/notes.js</code>, add cases to add, update and delete notes inside the switch statement.</p>
+<div class="highlight"><pre><span></span><span class="kr">export</span> <span class="k">default</span> <span class="kd">function</span> <span class="nx">notes</span><span class="p">(</span><span class="nx">state</span><span class="o">=</span><span class="nx">initialState</span><span class="p">,</span> <span class="nx">action</span><span class="p">)</span> <span class="p">{</span>
+  <span class="kd">let</span> <span class="nx">noteList</span> <span class="o">=</span> <span class="nx">state</span><span class="p">.</span><span class="nx">slice</span><span class="p">();</span>
+
+  <span class="k">switch</span> <span class="p">(</span><span class="nx">action</span><span class="p">.</span><span class="nx">type</span><span class="p">)</span> <span class="p">{</span>
+
+    <span class="k">case</span> <span class="s1">&#39;ADD_NOTE&#39;</span><span class="o">:</span>
+      <span class="k">return</span> <span class="p">[...</span><span class="nx">state</span><span class="p">,</span> <span class="p">{</span><span class="nx">text</span><span class="o">:</span> <span class="nx">action</span><span class="p">.</span><span class="nx">text</span><span class="p">}];</span>
+
+    <span class="k">case</span> <span class="s1">&#39;UPDATE_NOTE&#39;</span><span class="o">:</span>
+      <span class="kd">let</span> <span class="nx">noteToUpdate</span> <span class="o">=</span> <span class="nx">noteList</span><span class="p">[</span><span class="nx">action</span><span class="p">.</span><span class="nx">id</span><span class="p">]</span>
+      <span class="nx">noteToUpdate</span><span class="p">.</span><span class="nx">text</span> <span class="o">=</span> <span class="nx">action</span><span class="p">.</span><span class="nx">text</span><span class="p">;</span>
+      <span class="nx">noteList</span><span class="p">.</span><span class="nx">splice</span><span class="p">(</span><span class="nx">action</span><span class="p">.</span><span class="nx">id</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="nx">noteToUpdate</span><span class="p">);</span>
+      <span class="k">return</span> <span class="nx">noteList</span><span class="p">;</span>
+
+    <span class="k">case</span> <span class="s1">&#39;DELETE_NOTE&#39;</span><span class="o">:</span>
+      <span class="nx">noteList</span><span class="p">.</span><span class="nx">splice</span><span class="p">(</span><span class="nx">action</span><span class="p">.</span><span class="nx">id</span><span class="p">,</span> <span class="mi">1</span><span class="p">);</span>
+      <span class="k">return</span> <span class="nx">noteList</span><span class="p">;</span>
+
+    <span class="k">default</span><span class="o">:</span>
+      <span class="k">return</span> <span class="nx">state</span><span class="p">;</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>In above code we are handling different cases of action payload, namely <code>ADD_NOTE</code>, <code>UPDATE_NOTE</code> and <code>UPDATE_NOTE</code>. This individual cases do what their name suggest and return a modified copy of the state after the said action is done. Here we do not update the state directly, but we return a new state which will replace the current state of the notes reducer.</p>
+<p>These cases in the reducers will be only invoked when an action is dispatched of respective type. In <code>actions/notes.js</code> declare the actions:</p>
+<div class="highlight"><pre><span></span><span class="kr">export</span> <span class="kr">const</span> <span class="nx">addNote</span> <span class="o">=</span> <span class="nx">text</span> <span class="p">=&gt;</span> <span class="p">{</span>
+  <span class="k">return</span> <span class="p">{</span>
+    <span class="nx">type</span><span class="o">:</span> <span class="s1">&#39;ADD_NOTE&#39;</span><span class="p">,</span>
+    <span class="nx">text</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="kr">export</span> <span class="kr">const</span> <span class="nx">updateNote</span> <span class="o">=</span> <span class="p">(</span><span class="nx">id</span><span class="p">,</span> <span class="nx">text</span><span class="p">)</span> <span class="p">=&gt;</span> <span class="p">{</span>
+  <span class="k">return</span> <span class="p">{</span>
+    <span class="nx">type</span><span class="o">:</span> <span class="s1">&#39;UPDATE_NOTE&#39;</span><span class="p">,</span>
+    <span class="nx">id</span><span class="p">,</span>
+    <span class="nx">text</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="kr">export</span> <span class="kr">const</span> <span class="nx">deleteNote</span> <span class="o">=</span> <span class="nx">id</span> <span class="p">=&gt;</span> <span class="p">{</span>
+  <span class="k">return</span> <span class="p">{</span>
+    <span class="nx">type</span><span class="o">:</span> <span class="s1">&#39;DELETE_NOTE&#39;</span><span class="p">,</span>
+    <span class="nx">id</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>Each of above function returns an object with <code>type</code> property using which the reducer determines <em>how</em> the state is to be updated. Besides <code>type</code> these payloads can have any property as values which can later be used inside the reducer function while modifying the state.</p>
+<p>Update the <code>actions/index.js</code> file so that we can access all actions in one place:</p>
+<div class="highlight"><pre><span></span><span class="kr">import</span> <span class="o">*</span> <span class="nx">as</span> <span class="nx">notes</span> <span class="nx">from</span> <span class="s2">&quot;./notes&quot;</span><span class="p">;</span>
+
+<span class="kr">export</span> <span class="p">{</span><span class="nx">notes</span><span class="p">}</span>
+</pre></div>
+
+
+<h5>Using Actions inside a component</h5>
+<p>After the actions are defined, we can use them inside the <code>PonyNote</code> component by declaring properties in <code>mapDispatchToProps</code> function.</p>
+<p>Update the <code>mapDispatchToProps</code> function to use all actions:</p>
+<div class="highlight"><pre><span></span><span class="kr">import</span> <span class="p">{</span><span class="nx">notes</span><span class="p">}</span> <span class="nx">from</span> <span class="s2">&quot;../actions&quot;</span><span class="p">;</span>
+
+<span class="kr">const</span> <span class="nx">mapDispatchToProps</span> <span class="o">=</span> <span class="nx">dispatch</span> <span class="p">=&gt;</span> <span class="p">{</span>
+  <span class="k">return</span> <span class="p">{</span>
+    <span class="nx">addNote</span><span class="o">:</span> <span class="p">(</span><span class="nx">text</span><span class="p">)</span> <span class="p">=&gt;</span> <span class="p">{</span>
+      <span class="nx">dispatch</span><span class="p">(</span><span class="nx">notes</span><span class="p">.</span><span class="nx">addNote</span><span class="p">(</span><span class="nx">text</span><span class="p">));</span>
+    <span class="p">},</span>
+    <span class="nx">updateNote</span><span class="o">:</span> <span class="p">(</span><span class="nx">id</span><span class="p">,</span> <span class="nx">text</span><span class="p">)</span> <span class="p">=&gt;</span> <span class="p">{</span>
+      <span class="nx">dispatch</span><span class="p">(</span><span class="nx">notes</span><span class="p">.</span><span class="nx">addNote</span><span class="p">(</span><span class="nx">id</span><span class="p">,</span> <span class="nx">text</span><span class="p">));</span>
+    <span class="p">},</span>
+    <span class="nx">deleteNote</span><span class="o">:</span> <span class="p">(</span><span class="nx">id</span><span class="p">)</span> <span class="p">=&gt;</span> <span class="p">{</span>
+      <span class="nx">dispatch</span><span class="p">(</span><span class="nx">notes</span><span class="p">.</span><span class="nx">deleteNote</span><span class="p">(</span><span class="nx">id</span><span class="p">));</span>
+    <span class="p">},</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>Now all these dispatch actions are accessible in side a component using <code>this.props</code>.</p>
+<h5>Building UI elements to dispatch actions</h5>
+<p>Lets start by creating a form to add new notes to the notes redux state. In the <code>PonyNote</code> component, declare <code>state</code> and <code>submitNote</code> method.</p>
+<div class="highlight"><pre><span></span><span class="nx">state</span> <span class="o">=</span> <span class="p">{</span>
+  <span class="nx">text</span><span class="o">:</span> <span class="s2">&quot;&quot;</span>
+<span class="p">}</span>
+
+<span class="nx">submitNote</span> <span class="o">=</span> <span class="p">(</span><span class="nx">e</span><span class="p">)</span> <span class="p">=&gt;</span> <span class="p">{</span>
+  <span class="nx">e</span><span class="p">.</span><span class="nx">preventDefault</span><span class="p">();</span>
+  <span class="k">this</span><span class="p">.</span><span class="nx">props</span><span class="p">.</span><span class="nx">addNote</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">state</span><span class="p">.</span><span class="nx">text</span><span class="p">);</span>
+  <span class="k">this</span><span class="p">.</span><span class="nx">setState</span><span class="p">({</span><span class="nx">text</span><span class="o">:</span> <span class="s2">&quot;&quot;</span><span class="p">});</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>Inside the body of the component put the HTML form to enter text and save the note:</p>
+<div class="highlight"><pre><span></span><span class="nt">&lt;h3&gt;</span>Add new note<span class="nt">&lt;/h3&gt;</span>
+<span class="nt">&lt;form</span> <span class="na">onSubmit=</span><span class="s">{this.submitNote}</span><span class="nt">&gt;</span>
+  <span class="nt">&lt;input</span>
+    <span class="na">value=</span><span class="s">{this.state.text}</span>
+    <span class="na">placeholder=</span><span class="s">&quot;Enter note here...&quot;</span>
+    <span class="na">onChange=</span><span class="s">{(e)</span> <span class="err">=</span><span class="nt">&gt;</span> this.setState({text: e.target.value})}
+    required /&gt;
+  <span class="nt">&lt;input</span> <span class="na">type=</span><span class="s">&quot;submit&quot;</span> <span class="na">value=</span><span class="s">&quot;Save Note&quot;</span> <span class="nt">/&gt;</span>
+<span class="nt">&lt;/form&gt;</span>
+</pre></div>
+
+
+<p>The above code will store the note text in the component state and save it when the form is submitted. <code>onSubmit</code>, the application will dispatch an action <code>ADD_NOTE</code> which will then add the note to redux state.</p>
+<p>Similarly we can add option to delete notes when the "delete" button is pressed. Replace the contents of <code>tbody</code> with the following:</p>
+<div class="highlight"><pre><span></span>{this.props.notes.map((note, id) =&gt; (
+  <span class="nt">&lt;tr</span> <span class="na">key=</span><span class="s">{`note_${id}`}</span><span class="nt">&gt;</span>
+    <span class="nt">&lt;td&gt;</span>{note.text}<span class="nt">&lt;/td&gt;</span>
+    <span class="nt">&lt;td&gt;&lt;button&gt;</span>edit<span class="nt">&lt;/button&gt;&lt;/td&gt;</span>
+    <span class="nt">&lt;td&gt;&lt;button</span> <span class="na">onClick=</span><span class="s">{()</span> <span class="err">=</span><span class="nt">&gt;</span> this.props.deleteNote(id)}&gt;delete<span class="nt">&lt;/button&gt;&lt;/td&gt;</span>
+  <span class="nt">&lt;/tr&gt;</span>
+))}
+</pre></div>
+
+
+<p>For updating notes, we will need to do some additional changes to our component state and form element so that it can support creating and updating notes at the same time.</p>
+<div class="highlight"><pre><span></span><span class="nx">state</span> <span class="o">=</span> <span class="p">{</span>
+  <span class="nx">text</span><span class="o">:</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+  <span class="nx">updateNoteId</span><span class="o">:</span> <span class="kc">null</span><span class="p">,</span>
+<span class="p">}</span>
+
+<span class="nx">resetForm</span> <span class="o">=</span> <span class="p">()</span> <span class="p">=&gt;</span> <span class="p">{</span>
+  <span class="k">this</span><span class="p">.</span><span class="nx">setState</span><span class="p">({</span><span class="nx">text</span><span class="o">:</span> <span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="nx">updateNoteId</span><span class="o">:</span> <span class="kc">null</span><span class="p">});</span>
+<span class="p">}</span>
+
+<span class="nx">selectForEdit</span> <span class="o">=</span> <span class="p">(</span><span class="nx">id</span><span class="p">)</span> <span class="p">=&gt;</span> <span class="p">{</span>
+  <span class="kd">let</span> <span class="nx">note</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">props</span><span class="p">.</span><span class="nx">notes</span><span class="p">[</span><span class="nx">id</span><span class="p">];</span>
+  <span class="k">this</span><span class="p">.</span><span class="nx">setState</span><span class="p">({</span><span class="nx">text</span><span class="o">:</span> <span class="nx">note</span><span class="p">.</span><span class="nx">text</span><span class="p">,</span> <span class="nx">updateNoteId</span><span class="o">:</span> <span class="nx">id</span><span class="p">});</span>
+<span class="p">}</span>
+
+<span class="nx">submitNote</span> <span class="o">=</span> <span class="p">(</span><span class="nx">e</span><span class="p">)</span> <span class="p">=&gt;</span> <span class="p">{</span>
+  <span class="nx">e</span><span class="p">.</span><span class="nx">preventDefault</span><span class="p">();</span>
+  <span class="k">if</span> <span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">state</span><span class="p">.</span><span class="nx">updateNoteId</span> <span class="o">===</span> <span class="kc">null</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">this</span><span class="p">.</span><span class="nx">props</span><span class="p">.</span><span class="nx">addNote</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">state</span><span class="p">.</span><span class="nx">text</span><span class="p">);</span>
+  <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+    <span class="k">this</span><span class="p">.</span><span class="nx">props</span><span class="p">.</span><span class="nx">updateNote</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">state</span><span class="p">.</span><span class="nx">updateNoteId</span><span class="p">,</span> <span class="k">this</span><span class="p">.</span><span class="nx">state</span><span class="p">.</span><span class="nx">text</span><span class="p">);</span>
+  <span class="p">}</span>
+  <span class="k">this</span><span class="p">.</span><span class="nx">resetForm</span><span class="p">();</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>The component state now keeps track whether we are creating or updating a note, <code>submitNote</code> method changes behavior based on component state. We have also added helper method to load and reset form for updating notes.</p>
+<p>Inside the form element, place a button to reset form after selecting notes to edit by mistake.</p>
+<div class="highlight"><pre><span></span><span class="nt">&lt;button</span> <span class="na">onClick=</span><span class="s">{this.resetForm}</span><span class="nt">&gt;</span>Reset<span class="nt">&lt;/button&gt;</span>
+</pre></div>
+
+
+<p>And update the edit button to load notes for editing:</p>
+<div class="highlight"><pre><span></span><span class="nt">&lt;td&gt;&lt;button</span> <span class="na">onClick=</span><span class="s">{()</span> <span class="err">=</span><span class="nt">&gt;</span> this.selectForEdit(id)}&gt;edit<span class="nt">&lt;/button&gt;&lt;/td&gt;</span>
+</pre></div>
+
+
+<p>This will result in a simple note-taking web app with functionality to add, update and edit notes. It should look like this:</p>
+<p><img alt="Redux working webapp" src="http://v1k45.com/images/modern-django-2-redux-working-webapp.png"></p>
+<h3>Add some css</h3>
+<p>Before moving any further, lets add some css so that our application doesn't hurt our eyes. For this we will use <a href="https://github.com/oxalorg/sakura">sakura.css</a>, the same classless css library which is used for this blog!</p>
+<p>Start by downloading normalize.css and sakura.css inside a css directory in our frontend root.</p>
+<div class="highlight"><pre><span></span>$ mkdir css
+$ <span class="nb">cd</span> css
+$ wget https://raw.githubusercontent.com/oxalorg/sakura/master/css/normalize.css
+$ wget wget https://raw.githubusercontent.com/oxalorg/sakura/master/css/sakura.css
+</pre></div>
+
+
+<p>After this, update the index.css file to import these downloaded css files:</p>
+<div class="highlight"><pre><span></span><span class="nd">@import</span> <span class="n">url</span><span class="p">(</span><span class="s2">&quot;css/normalize.css&quot;</span><span class="p">);</span>
+<span class="nd">@import</span> <span class="n">url</span><span class="p">(</span><span class="s2">&quot;css/sakura.css&quot;</span><span class="p">);</span>
+</pre></div>
+
+
+<p>Much better!</p>
+<p><img alt="webapp with css" src="http://v1k45.com/images/modern-django-2-sakura.png"></p>
+<h6></h6>
+<p>Since our webapp is working smoothly on client side but cannot store data permanently, in next post we will create models and APIs in django to store and manipulate notes from database so that we don't lose any notes.</p>
+<h3>Reference</h3>
+<ul>
+<li><a href="https://redux.js.org/basics/example-todo-list">Example: Todo List with redux</a></li>
+<li><a href="https://reacttraining.com/react-router/web/guides/philosophy">react-router-dom docs</a></li>
+<li><a href="https://medium.com/@abhayg772/introduction-to-redux-using-react-native-a8f1e8778333">redux data flow chart</a></li>
+</ul>
+    </div>
+    <footer>
+    <hr/>
+      Posted in: <a href="http://v1k45.com/blog/categories/web-development/">Web Development</a>
+      <br />
+      Tags:
+          <a href="http://v1k45.com/blog/tags/javascript/">javascript</a>,           <a href="http://v1k45.com/blog/tags/js/">js</a>,           <a href="http://v1k45.com/blog/tags/react/">react</a>,           <a href="http://v1k45.com/blog/tags/redux/">redux</a>,           <a href="http://v1k45.com/blog/tags/react-router/">react-router</a><div id="disqus_thread"></div>
+<script>
+  var disqus_config = function () {
+    this.page.url = "http://v1k45.com/blog/modern-django-part-2-redux-and-react-router-setup/";
+    this.page.identifier = "modern-django-part-2-redux-and-react-router-setup";
+  };
+  (function() { // DON'T EDIT BELOW THIS LINE
+  var d = document, s = d.createElement('script');
+    s.src = 'https://v1k45.disqus.com/embed.js';
+  s.setAttribute('data-timestamp', +new Date());
+  (d.head || d.body).appendChild(s);
+  })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>    </footer>
+  </section>
+		</main>
+
+		<!-- Global site tag (gtag.js) - Google Analytics -->
+		<script async src="https://www.googletagmanager.com/gtag/js?id=UA-114981561-1"></script>
+		<script>
+		  window.dataLayer = window.dataLayer || [];
+		  function gtag(){dataLayer.push(arguments);}
+		  gtag('js', new Date());
+
+		  gtag('config', 'UA-114981561-1');
+		</script>
+
+	<script id="dsq-count-scr" src="//v1k45.disqus.com/count.js" async></script>
+	</body>
+</html>

@@ -271,27 +271,27 @@ $ npm run eject
 
 <p>That's it. Stop the webpack server and run it again and go to <a href="http://localhost:8000/">http://localhost:8000/</a>, you should see the same react welocme page as you did on webpack server page.</p>
 <p>Now, any changes you do in <code>src/App.js</code> file will be instantly reflected on the opened page in browser using hot loading.</p>
-<div class="highlight"><pre><span></span><span class="kr">import</span> <span class="nx">React</span><span class="p">,</span> <span class="p">{</span> <span class="nx">Component</span> <span class="p">}</span> <span class="nx">from</span> <span class="s1">&#39;react&#39;</span><span class="p">;</span>
-<span class="kr">import</span> <span class="nx">logo</span> <span class="nx">from</span> <span class="s1">&#39;./logo.svg&#39;</span><span class="p">;</span>
-<span class="kr">import</span> <span class="s1">&#39;./App.css&#39;</span><span class="p">;</span>
+<div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">React</span><span class="o">,</span> <span class="p">{</span> <span class="n">Component</span> <span class="p">}</span> <span class="kn">from</span> <span class="s1">&#39;react&#39;</span><span class="p">;</span>
+<span class="kn">import</span> <span class="nn">logo</span> <span class="nn">from</span> <span class="s1">&#39;./logo.svg&#39;</span><span class="p">;</span>
+<span class="kn">import</span> <span class="s1">&#39;./App.css&#39;</span><span class="p">;</span>
 
-<span class="kr">class</span> <span class="nx">App</span> <span class="kr">extends</span> <span class="nx">Component</span> <span class="p">{</span>
-  <span class="nx">render</span><span class="p">()</span> <span class="p">{</span>
+<span class="k">class</span> <span class="nc">App</span> <span class="n">extends</span> <span class="n">Component</span> <span class="p">{</span>
+  <span class="n">render</span><span class="p">()</span> <span class="p">{</span>
     <span class="k">return</span> <span class="p">(</span>
-      <span class="p">&lt;</span><span class="nt">div</span> <span class="na">className</span><span class="o">=</span><span class="s">&quot;App&quot;</span><span class="p">&gt;</span>
-        <span class="p">&lt;</span><span class="nt">header</span> <span class="na">className</span><span class="o">=</span><span class="s">&quot;App-header&quot;</span><span class="p">&gt;</span>
-          <span class="p">&lt;</span><span class="nt">img</span> <span class="na">src</span><span class="o">=</span><span class="s">{logo}</span> <span class="na">className</span><span class="o">=</span><span class="s">&quot;App-logo&quot;</span> <span class="na">alt</span><span class="o">=</span><span class="s">&quot;logo&quot;</span> <span class="p">/&gt;</span>
-          <span class="p">&lt;</span><span class="nt">h1</span> <span class="na">className</span><span class="o">=</span><span class="s">&quot;App-title&quot;</span><span class="p">&gt;</span><span class="nx">Welcome</span> <span class="nx">to</span> <span class="nx">Ponynote</span><span class="p">&lt;/</span><span class="nt">h1</span><span class="p">&gt;</span>
-        <span class="p">&lt;/</span><span class="nt">header</span><span class="p">&gt;</span>
-        <span class="p">&lt;</span><span class="nt">p</span> <span class="na">className</span><span class="o">=</span><span class="s">&quot;App-intro&quot;</span><span class="p">&gt;</span>
-            <span class="nx">A</span> <span class="nx">react</span> <span class="nx">app</span> <span class="kd">with</span> <span class="nx">django</span> <span class="nx">as</span> <span class="nx">a</span> <span class="nx">backend</span><span class="p">.</span>
-        <span class="p">&lt;/</span><span class="nt">p</span><span class="p">&gt;</span>
-      <span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
+      <span class="o">&lt;</span><span class="n">div</span> <span class="n">className</span><span class="o">=</span><span class="s2">&quot;App&quot;</span><span class="o">&gt;</span>
+        <span class="o">&lt;</span><span class="n">header</span> <span class="n">className</span><span class="o">=</span><span class="s2">&quot;App-header&quot;</span><span class="o">&gt;</span>
+          <span class="o">&lt;</span><span class="n">img</span> <span class="n">src</span><span class="o">=</span><span class="p">{</span><span class="n">logo</span><span class="p">}</span> <span class="n">className</span><span class="o">=</span><span class="s2">&quot;App-logo&quot;</span> <span class="n">alt</span><span class="o">=</span><span class="s2">&quot;logo&quot;</span> <span class="o">/&gt;</span>
+          <span class="o">&lt;</span><span class="n">h1</span> <span class="n">className</span><span class="o">=</span><span class="s2">&quot;App-title&quot;</span><span class="o">&gt;</span><span class="n">Welcome</span> <span class="n">to</span> <span class="n">Ponynote</span><span class="o">&lt;/</span><span class="n">h1</span><span class="o">&gt;</span>
+        <span class="o">&lt;/</span><span class="n">header</span><span class="o">&gt;</span>
+        <span class="o">&lt;</span><span class="n">p</span> <span class="n">className</span><span class="o">=</span><span class="s2">&quot;App-intro&quot;</span><span class="o">&gt;</span>
+            <span class="n">A</span> <span class="n">react</span> <span class="n">app</span> <span class="k">with</span> <span class="n">django</span> <span class="k">as</span> <span class="n">a</span> <span class="n">backend</span><span class="o">.</span>
+        <span class="o">&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
+      <span class="o">&lt;/</span><span class="n">div</span><span class="o">&gt;</span>
     <span class="p">);</span>
   <span class="p">}</span>
 <span class="p">}</span>
 
-<span class="kr">export</span> <span class="k">default</span> <span class="nx">App</span><span class="p">;</span>
+<span class="n">export</span> <span class="n">default</span> <span class="n">App</span><span class="p">;</span>
 </pre></div>
 
 
@@ -441,6 +441,17 @@ $ npm run eject
 <noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>    </footer>
   </section>
 		</main>
+
+		<!-- Global site tag (gtag.js) - Google Analytics -->
+		<script async src="https://www.googletagmanager.com/gtag/js?id=UA-114981561-1"></script>
+		<script>
+		  window.dataLayer = window.dataLayer || [];
+		  function gtag(){dataLayer.push(arguments);}
+		  gtag('js', new Date());
+
+		  gtag('config', 'UA-114981561-1');
+		</script>
+
 	<script id="dsq-count-scr" src="//v1k45.disqus.com/count.js" async></script>
 	</body>
 </html>
