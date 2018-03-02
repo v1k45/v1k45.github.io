@@ -425,7 +425,7 @@ All the directory and file names specified above are not enforced in any senese.
 
 #############
 
-That's all on how to setup react and django to work together. In next post we'll setup in-application routing using `react-router-dom` and global state management using `redux`.
+That's all on how to setup react and django to work together. In [next post]({filename}/modern-django-part-2.md) we'll setup in-application routing using `react-router-dom` and global state management using `redux`.
 
 
 ### References
