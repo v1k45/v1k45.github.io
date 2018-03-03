@@ -1,5 +1,6 @@
 Title: Modern Django: Part 2: Redux and React Router setup
 Date: 2018-03-02 13:30
+Modified: 2018-03-03 21:40
 Category: Web Development
 Tags: javascript, js, react, redux, react-router
 
@@ -505,7 +506,7 @@ Much better!
 
 ########
 
-Since our webapp is working smoothly on client side but cannot store data permanently, in next post we will create models and APIs in django to store and manipulate notes from database so that we don't lose any notes.
+Since our webapp is working smoothly on client side but cannot store data permanently, in [next post]({filename}/modern-django-part-3.md) we will create models and APIs in django to store and manipulate notes from database so that we don't lose any notes.
 
 
 ### Reference
