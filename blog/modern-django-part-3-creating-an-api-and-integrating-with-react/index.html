@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+  			<title>Modern Django: Part 3: Creating an API and integrating with React &mdash; v1k45</title>
+			<meta charset="utf-8" />
+			<meta name="viewport" content="width=device-width" />
+
+			<link href="http://v1k45.com/feeds/all.atom.xml" type="application/atom+xml" rel="alternate" title="v1k45 Full Atom Feed" />
+			<link href="http://v1k45.com/feeds/web-development.atom.xml" type="application/atom+xml" rel="alternate" title="v1k45 Categories Atom Feed" />
+
+			<link rel="stylesheet" href="/theme/css/sakura-dark.css" type="text/css" media="screen" title="no title" charset="utf-8">
+			<link rel="stylesheet" href="/theme/css/pygment.css" type="text/css" media="screen" title="no title" charset="utf-8">
+
+
+
+
+    <meta name="tags" content="python" />
+    <meta name="tags" content="django" />
+    <meta name="tags" content="javascript" />
+    <meta name="tags" content="js" />
+    <meta name="tags" content="react" />
+    <meta name="tags" content="django-rest-framework" />
+    <meta name="tags" content="redux" />
+
+
+		<style type="text/css" media="screen">
+			body {
+				font-family: "Helivetica Neue",Helvetica,arial,sans-serif;
+			}
+		</style>
+	</head>
+
+	<body>
+        <header>
+			<nav>
+				<a href="/">v1k45</a>
+				[
+						<a href=/>about</a>,&nbsp;
+
+						<a href=/blog/>blog</a>
+							,&nbsp;
+						<a href=https://github.com/v1k45>github</a>
+							,&nbsp;
+						<a href=http://stackoverflow.com/users/4726598/v1k45>stackoverflow</a>
+				]
+			</nav>
+        </header>
+		<main>
+  <section id="content">
+    <header>
+    <h2>
+      <a href="http://v1k45.com/blog/modern-django-part-3-creating-an-api-and-integrating-with-react/" rel="bookmark"
+       title="Permalink to Modern Django: Part 3: Creating an API and integrating with React">Modern Django: Part 3: Creating an API and integrating with React</a></h2>
+    </header>
+    <footer>
+    <time datetime="2018-03-03T21:40:00+05:30">
+        Sat 03 March 2018
+    </time>
+    </footer>
+    <div>
+    <p>In <a href="http://v1k45.com/blog/modern-django-part-2-redux-and-react-router-setup/">last post</a> we developed a frontend of our note taking application which has ability to store notes on client-side using redux store. In this part we will create database models and APIs to create, read, update and delete notes in database using react frontend and redux store.</p>
+<p>The code for this repository is hosted on my github, <a href="https://github.com/v1k45/ponynote">v1k45/ponynote</a>. You can checkout <code>part-3</code> branch to all the changes done till the end of this part.</p>
+<h3>Creating DB Models</h3>
+<p>To store the notes in database, first we need to create models. We'll start by creating an app and then a Note model inside it.</p>
+<p>In the project root, create an app using <code>startapp</code> command and add it to admin.</p>
+<div class="highlight"><pre><span></span>(ponynote)  $ ./manage.py startapp notes
+</pre></div>
+
+
+<p>Add <code>notes.apps.NotesConfig</code> to the <code>INSTALLED_APPS</code> list in <code>ponynote/settings.py</code>.</p>
+<h3>Note Model</h3>
+<p>Open <code>notes/models.py</code> create the following model:</p>
+<div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">django.db</span> <span class="kn">import</span> <span class="n">models</span>
+
+
+<span class="k">class</span> <span class="nc">Note</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">text</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mi">255</span><span class="p">)</span>
+    <span class="n">created_at</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">DateTimeField</span><span class="p">(</span><span class="n">auto_now_add</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">text</span>
+</pre></div>
+
+
+<p>Since our application feature is limited, two fields in the model will do.</p>
+<p>Migrate the database to add this table using the following command:</p>
+<div class="highlight"><pre><span></span>(ponynote)  $ ./manage.py makemigrations
+Migrations for &#39;notes&#39;:
+  notes/migrations/0001_initial.py
+    - Create model Note
+
+(ponynote)  $ ./manage.py migrate
+Operations to perform:
+  Apply all migrations: admin, auth, contenttypes, notes, sessions
+Running migrations:
+  Applying notes.0001_initial... OK
+</pre></div>
+
+
+<h3>Building API using DRF</h3>
+<p>Now that the model is created, we can create an API to peform CRUD actions on the database. We'll do this using <code>django-rest-framework</code>.</p>
+<p>Install <code>django-rest-framework</code> in the project virtual environment:</p>
+<div class="highlight"><pre><span></span>(ponynote)  $ pip install djangorestframework
+</pre></div>
+
+
+<p>Now create three python files, <code>api.py</code>, <code>serialiers.py</code> and <code>endpoints.py</code>.</p>
+<div class="highlight"><pre><span></span>$ touch notes/api.py notes/serializers.py notes/endpoints.py
+</pre></div>
+
+
+<p>Start by creating a serializer for our Notes model, create the following serializer inside <code>serializers.py</code>:</p>
+<div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">rest_framework</span> <span class="kn">import</span> <span class="n">serializers</span>
+
+<span class="kn">from</span> <span class="nn">.models</span> <span class="kn">import</span> <span class="n">Note</span>
+
+
+<span class="k">class</span> <span class="nc">NoteSerializer</span><span class="p">(</span><span class="n">serializers</span><span class="o">.</span><span class="n">ModelSerializer</span><span class="p">):</span>
+    <span class="k">class</span> <span class="nc">Meta</span><span class="p">:</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">Note</span>
+        <span class="n">fields</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;id&#39;</span><span class="p">,</span> <span class="s1">&#39;text&#39;</span><span class="p">,</span> <span class="p">)</span>
+</pre></div>
+
+
+<p>The above serializer is <code>ModelSerializer</code>, it has an API similar (somewhat) to the <code>ModelForm</code> class in django.</p>
+<p>After creating serializer, create an API for <code>Note</code> model using <code>NoteSerialzer</code>:</p>
+<div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">rest_framework</span> <span class="kn">import</span> <span class="n">viewsets</span><span class="p">,</span> <span class="n">permissions</span>
+
+<span class="kn">from</span> <span class="nn">.models</span> <span class="kn">import</span> <span class="n">Note</span>
+<span class="kn">from</span> <span class="nn">.serializers</span> <span class="kn">import</span> <span class="n">NoteSerializer</span>
+
+
+<span class="k">class</span> <span class="nc">NoteViewSet</span><span class="p">(</span><span class="n">viewsets</span><span class="o">.</span><span class="n">ModelViewSet</span><span class="p">):</span>
+    <span class="n">queryset</span> <span class="o">=</span> <span class="n">Note</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+    <span class="n">permission_classes</span> <span class="o">=</span> <span class="p">[</span><span class="n">permissions</span><span class="o">.</span><span class="n">AllowAny</span><span class="p">,</span> <span class="p">]</span>
+    <span class="n">serializer_class</span> <span class="o">=</span> <span class="n">NoteSerializer</span>
+</pre></div>
+
+
+<p>A viewset works like a generic model view in django views. Lets allow all types of requests to this endpoint for now.</p>
+<p>Lets register this API ViewSet to the DRF router and add it to django urls. In the <code>notes/endpoints.py</code> write the following:</p>
+<div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">django.conf.urls</span> <span class="kn">import</span> <span class="n">include</span><span class="p">,</span> <span class="n">url</span>
+<span class="kn">from</span> <span class="nn">rest_framework</span> <span class="kn">import</span> <span class="n">routers</span>
+
+<span class="kn">from</span> <span class="nn">.api</span> <span class="kn">import</span> <span class="n">NoteViewSet</span>
+
+<span class="n">router</span> <span class="o">=</span> <span class="n">routers</span><span class="o">.</span><span class="n">DefaultRouter</span><span class="p">()</span>
+<span class="n">router</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="s1">&#39;notes&#39;</span><span class="p">,</span> <span class="n">NoteViewSet</span><span class="p">)</span>
+
+<span class="n">urlpatterns</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="n">url</span><span class="p">(</span><span class="s2">&quot;^&quot;</span><span class="p">,</span> <span class="n">include</span><span class="p">(</span><span class="n">router</span><span class="o">.</span><span class="n">urls</span><span class="p">)),</span>
+<span class="p">]</span>
+</pre></div>
+
+
+<p>In project urls.py <code>ponynote/urls.py</code>:</p>
+<div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">django.conf.urls</span> <span class="kn">import</span> <span class="n">url</span><span class="p">,</span> <span class="n">include</span>
+<span class="kn">from</span> <span class="nn">django.views.generic</span> <span class="kn">import</span> <span class="n">TemplateView</span>
+
+<span class="kn">from</span> <span class="nn">notes</span> <span class="kn">import</span> <span class="n">endpoints</span>
+
+<span class="n">urlpatterns</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="n">url</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;^api/&#39;</span><span class="p">,</span> <span class="n">include</span><span class="p">(</span><span class="n">endpoints</span><span class="p">)),</span>
+    <span class="n">url</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;^&#39;</span><span class="p">,</span> <span class="n">TemplateView</span><span class="o">.</span><span class="n">as_view</span><span class="p">(</span><span class="n">template_name</span><span class="o">=</span><span class="s2">&quot;index.html&quot;</span><span class="p">)),</span>
+<span class="p">]</span>
+</pre></div>
+
+
+<p>After this, you'll be able to make requests on the notes API using <code>curl</code> or your favorite http client like Postman or Insomnia:</p>
+<h3>API in action</h3>
+<ul>
+<li>Create Note:</li>
+</ul>
+<div class="highlight"><pre><span></span>curl --request POST \
+  --url http://localhost:8000/api/notes/ \
+  --header &#39;content-type: application/json&#39; \
+  --data &#39;{
+    &quot;text&quot;: &quot;First Note!&quot;
+}&#39;
+</pre></div>
+
+
+<ul>
+<li>Get All Notes:</li>
+</ul>
+<div class="highlight"><pre><span></span>curl --request GET \
+  --url http://localhost:8000/api/notes/ \
+  --header &#39;content-type: application/json&#39;
+</pre></div>
+
+
+<ul>
+<li>Get a specific note using id:</li>
+</ul>
+<div class="highlight"><pre><span></span>curl --request GET \
+  --url http://localhost:8000/api/notes/1/ \
+  --header &#39;content-type: application/json&#39;
+</pre></div>
+
+
+<ul>
+<li>Delete a specific note using id:</li>
+</ul>
+<div class="highlight"><pre><span></span>curl --request DELETE \
+  --url http://localhost:8000/api/notes/1/ \
+  --header &#39;content-type: application/json&#39;
+</pre></div>
+
+
+<h3>Integrating DRF API with Frontend</h3>
+<p>To be able to fetch and manipulate notes in the backend from frontend, we need to make use of few libraries. In order to fetch notes, we will use <code>whatwg-fetch</code> (already included with <code>create-react-app</code>) and <code>redux-thunk</code> for asynchronous action creation.</p>
+<h4>What is redux-thunk?</h4>
+<p>Redux Thunk middleware allows you to write action creators that return a function instead of an action. The thunk can be used to delay the dispatch of an action, or to dispatch only if a certain condition is met. The inner function receives the store methods dispatch and getState as parameters</p>
+<h4>Install and setup redux-thunk</h4>
+<div class="highlight"><pre><span></span>$ npm install redux-thunk --save
+</pre></div>
+
+
+<p>Then in the <code>App.js</code> file, import <code>thunk</code> and <code>applyMiddleware</code> function, pass it to the <code>createStore</code> function and we are good to go.</p>
+<div class="highlight"><pre><span></span><span class="kr">import</span> <span class="p">{</span> <span class="nx">createStore</span><span class="p">,</span> <span class="nx">applyMiddleware</span> <span class="p">}</span> <span class="nx">from</span> <span class="s2">&quot;redux&quot;</span><span class="p">;</span>
+<span class="kr">import</span> <span class="nx">thunk</span> <span class="nx">from</span> <span class="s2">&quot;redux-thunk&quot;</span><span class="p">;</span>
+
+<span class="kd">let</span> <span class="nx">store</span> <span class="o">=</span> <span class="nx">createStore</span><span class="p">(</span><span class="nx">ponyApp</span><span class="p">,</span> <span class="nx">applyMiddleware</span><span class="p">(</span><span class="nx">thunk</span><span class="p">));</span>
+</pre></div>
+
+
+<h4>Async redux actions</h4>
+<p>Let us create our first async action using redux thunk. Write the follwoing function in <code>actions/notes.js</code>:</p>
+<div class="highlight"><pre><span></span><span class="kr">export</span> <span class="kr">const</span> <span class="nx">fetchNotes</span> <span class="o">=</span> <span class="p">()</span> <span class="p">=&gt;</span> <span class="p">{</span>
+  <span class="k">return</span> <span class="nx">dispatch</span> <span class="p">=&gt;</span> <span class="p">{</span>
+    <span class="kd">let</span> <span class="nx">headers</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;Content-Type&quot;</span><span class="o">:</span> <span class="s2">&quot;application/json&quot;</span><span class="p">};</span>
+    <span class="k">return</span> <span class="nx">fetch</span><span class="p">(</span><span class="s2">&quot;/api/notes/&quot;</span><span class="p">,</span> <span class="p">{</span><span class="nx">headers</span><span class="p">,</span> <span class="p">})</span>
+      <span class="p">.</span><span class="nx">then</span><span class="p">(</span><span class="nx">res</span> <span class="p">=&gt;</span> <span class="nx">res</span><span class="p">.</span><span class="nx">json</span><span class="p">())</span>
+      <span class="p">.</span><span class="nx">then</span><span class="p">(</span><span class="nx">notes</span> <span class="p">=&gt;</span> <span class="p">{</span>
+        <span class="k">return</span> <span class="nx">dispatch</span><span class="p">({</span>
+          <span class="nx">type</span><span class="o">:</span> <span class="s1">&#39;FETCH_NOTES&#39;</span><span class="p">,</span>
+          <span class="nx">notes</span>
+        <span class="p">})</span>
+      <span class="p">})</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>The above code will perform an API call to the django application at <code>api/notes/</code> and dispatch the <code>FETCH_NOTES</code> action when response is received.</p>
+<p>Now handle this action in the reducer <code>reducers/notes.js</code> by adding <code>FETCH_NOTES</code> case in the <code>switch</code> statement.:</p>
+<div class="highlight"><pre><span></span><span class="k">case</span> <span class="s1">&#39;FETCH_NOTES&#39;</span><span class="o">:</span>
+    <span class="k">return</span> <span class="p">[...</span><span class="nx">state</span><span class="p">,</span> <span class="p">...</span><span class="nx">action</span><span class="p">.</span><span class="nx">notes</span><span class="p">];</span>
+</pre></div>
+
+
+<p>Since we going to use the server database for notes, lets set the <code>initialState</code> as an empty array by removing the dummy note.</p>
+<div class="highlight"><pre><span></span><span class="kr">const</span> <span class="nx">initialState</span> <span class="o">=</span> <span class="p">[];</span>
+</pre></div>
+
+
+<h4>Using the async action in component</h4>
+<p>Using this action is no different than using a normal action. Just add it to <code>mapDispatchToProps</code>.</p>
+<div class="highlight"><pre><span></span><span class="kr">const</span> <span class="nx">mapDispatchToProps</span> <span class="o">=</span> <span class="nx">dispatch</span> <span class="p">=&gt;</span> <span class="p">{</span>
+  <span class="k">return</span> <span class="p">{</span>
+    <span class="nx">fetchNotes</span><span class="o">:</span> <span class="p">()</span> <span class="p">=&gt;</span> <span class="p">{</span>
+      <span class="nx">dispatch</span><span class="p">(</span><span class="nx">notes</span><span class="p">.</span><span class="nx">fetchNotes</span><span class="p">());</span>
+    <span class="p">},</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>And call that action dispatcher when component mounts so that the notes are fetched from API and loaded to redux store. Add <code>componentDidMount</code> method to <code>PonyNote</code> class:</p>
+<div class="highlight"><pre><span></span><span class="nx">componentDidMount</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">this</span><span class="p">.</span><span class="nx">props</span><span class="p">.</span><span class="nx">fetchNotes</span><span class="p">();</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>On reloading, you should see the list of notes which you created using the API directly. If you haven't already, lets connect the <code>addNote</code> action to the <code>API</code> so that we start seeing notes directly from the database.</p>
+<h4>Add notes using API call</h4>
+<p>Lets update the <code>addNote</code> action in <code>actions/notes.js</code> file to send a <code>POST</code> request to notes api:</p>
+<div class="highlight"><pre><span></span><span class="kr">export</span> <span class="kr">const</span> <span class="nx">addNote</span> <span class="o">=</span> <span class="nx">text</span> <span class="p">=&gt;</span> <span class="p">{</span>
+  <span class="k">return</span> <span class="nx">dispatch</span> <span class="p">=&gt;</span> <span class="p">{</span>
+    <span class="kd">let</span> <span class="nx">headers</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;Content-Type&quot;</span><span class="o">:</span> <span class="s2">&quot;application/json&quot;</span><span class="p">};</span>
+    <span class="kd">let</span> <span class="nx">body</span> <span class="o">=</span> <span class="nx">JSON</span><span class="p">.</span><span class="nx">stringify</span><span class="p">({</span><span class="nx">text</span><span class="p">,</span> <span class="p">});</span>
+    <span class="k">return</span> <span class="nx">fetch</span><span class="p">(</span><span class="s2">&quot;/api/notes/&quot;</span><span class="p">,</span> <span class="p">{</span><span class="nx">headers</span><span class="p">,</span> <span class="nx">method</span><span class="o">:</span> <span class="s2">&quot;POST&quot;</span><span class="p">,</span> <span class="nx">body</span><span class="p">})</span>
+      <span class="p">.</span><span class="nx">then</span><span class="p">(</span><span class="nx">res</span> <span class="p">=&gt;</span> <span class="nx">res</span><span class="p">.</span><span class="nx">json</span><span class="p">())</span>
+      <span class="p">.</span><span class="nx">then</span><span class="p">(</span><span class="nx">note</span> <span class="p">=&gt;</span> <span class="p">{</span>
+        <span class="k">return</span> <span class="nx">dispatch</span><span class="p">({</span>
+          <span class="nx">type</span><span class="o">:</span> <span class="s1">&#39;ADD_NOTE&#39;</span><span class="p">,</span>
+          <span class="nx">note</span>
+        <span class="p">})</span>
+      <span class="p">})</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>In the above action function, our applcation will send a POST request with a JSON data of the note text and then disptach the <code>ADD_NOTE</code> action which will isert the added note to redux store. In <code>reducers/notes.js</code>, update the <code>ADD_NOTE</code> case to add the whole note object instead of text.</p>
+<div class="highlight"><pre><span></span><span class="k">case</span> <span class="s1">&#39;ADD_NOTE&#39;</span><span class="o">:</span>
+    <span class="k">return</span> <span class="p">[...</span><span class="nx">state</span><span class="p">,</span> <span class="nx">action</span><span class="p">.</span><span class="nx">note</span><span class="p">];</span>
+</pre></div>
+
+
+<p>After this a slight modification in our <code>PonyNote.jsx</code> component so that we reset the form only after the note has been successfully created:</p>
+<p>Add a <code>return</code> statement to the action dispatch call so that we can chain additional callbacks to the API call promise.</p>
+<div class="highlight"><pre><span></span><span class="nx">addNote</span><span class="o">:</span> <span class="p">(</span><span class="nx">text</span><span class="p">)</span> <span class="p">=&gt;</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="nx">dispatch</span><span class="p">(</span><span class="nx">notes</span><span class="p">.</span><span class="nx">addNote</span><span class="p">(</span><span class="nx">text</span><span class="p">));</span>
+<span class="p">},</span>
+</pre></div>
+
+
+<p>Update the <code>submitNote</code> method by moving <code>this.resetForm()</code> call from bottom to a callback for <code>addNote</code> function:</p>
+<div class="highlight"><pre><span></span><span class="k">this</span><span class="p">.</span><span class="nx">props</span><span class="p">.</span><span class="nx">addNote</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">state</span><span class="p">.</span><span class="nx">text</span><span class="p">).</span><span class="nx">then</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">resetForm</span><span class="p">)</span>
+</pre></div>
+
+
+<p>Similarly you can <code>catch</code> any errors thrown by the promise and handle API error and show then on the UI. For sake of simplicity, we will not cover that.</p>
+<h4>Updating notes</h4>
+<p>Updating notes is very similar to <code>addNote</code> action which calls API. All we need to do is pass the <code>note.id</code> in endpoint url.</p>
+<p>Update the <code>updateNote</code> action in <code>actions/notes.js</code>:</p>
+<div class="highlight"><pre><span></span><span class="kr">export</span> <span class="kr">const</span> <span class="nx">updateNote</span> <span class="o">=</span> <span class="p">(</span><span class="nx">index</span><span class="p">,</span> <span class="nx">text</span><span class="p">)</span> <span class="p">=&gt;</span> <span class="p">{</span>
+  <span class="k">return</span> <span class="p">(</span><span class="nx">dispatch</span><span class="p">,</span> <span class="nx">getState</span><span class="p">)</span> <span class="p">=&gt;</span> <span class="p">{</span>
+
+    <span class="kd">let</span> <span class="nx">headers</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;Content-Type&quot;</span><span class="o">:</span> <span class="s2">&quot;application/json&quot;</span><span class="p">};</span>
+    <span class="kd">let</span> <span class="nx">body</span> <span class="o">=</span> <span class="nx">JSON</span><span class="p">.</span><span class="nx">stringify</span><span class="p">({</span><span class="nx">text</span><span class="p">,</span> <span class="p">});</span>
+    <span class="kd">let</span> <span class="nx">noteId</span> <span class="o">=</span> <span class="nx">getState</span><span class="p">().</span><span class="nx">notes</span><span class="p">[</span><span class="nx">index</span><span class="p">].</span><span class="nx">id</span><span class="p">;</span>
+
+    <span class="k">return</span> <span class="nx">fetch</span><span class="p">(</span><span class="sb">`/api/notes/</span><span class="si">${</span><span class="nx">noteId</span><span class="si">}</span><span class="sb">/`</span><span class="p">,</span> <span class="p">{</span><span class="nx">headers</span><span class="p">,</span> <span class="nx">method</span><span class="o">:</span> <span class="s2">&quot;PUT&quot;</span><span class="p">,</span> <span class="nx">body</span><span class="p">})</span>
+      <span class="p">.</span><span class="nx">then</span><span class="p">(</span><span class="nx">res</span> <span class="p">=&gt;</span> <span class="nx">res</span><span class="p">.</span><span class="nx">json</span><span class="p">())</span>
+      <span class="p">.</span><span class="nx">then</span><span class="p">(</span><span class="nx">note</span> <span class="p">=&gt;</span> <span class="p">{</span>
+        <span class="k">return</span> <span class="nx">dispatch</span><span class="p">({</span>
+          <span class="nx">type</span><span class="o">:</span> <span class="s1">&#39;UPDATE_NOTE&#39;</span><span class="p">,</span>
+          <span class="nx">note</span><span class="p">,</span>
+          <span class="nx">index</span>
+        <span class="p">})</span>
+      <span class="p">})</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>Note that the first argument of <code>updateNote</code> is <code>index</code> instead of <code>id</code>, this is done to easily get the note which is being updated. Also, we have a <code>getState</code> argument for ther return action function, it is used to get current state of the application. We used it to get the note.id using the index we had.</p>
+<p>Another important thing is that the request method is <code>PUT</code>, which indicates that the resource on server should be updated. In the final action dispatch we have the index and newly saved note as the data, we will use it in the reducer.</p>
+<p>Update <code>UPDATE_NOTE</code> case in <code>redcers/notes.js</code>:</p>
+<div class="highlight"><pre><span></span><span class="k">case</span> <span class="s1">&#39;UPDATE_NOTE&#39;</span><span class="o">:</span>
+    <span class="kd">let</span> <span class="nx">noteToUpdate</span> <span class="o">=</span> <span class="nx">noteList</span><span class="p">[</span><span class="nx">action</span><span class="p">.</span><span class="nx">index</span><span class="p">]</span>
+    <span class="nx">noteToUpdate</span><span class="p">.</span><span class="nx">text</span> <span class="o">=</span> <span class="nx">action</span><span class="p">.</span><span class="nx">note</span><span class="p">.</span><span class="nx">text</span><span class="p">;</span>
+    <span class="nx">noteList</span><span class="p">.</span><span class="nx">splice</span><span class="p">(</span><span class="nx">action</span><span class="p">.</span><span class="nx">index</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="nx">noteToUpdate</span><span class="p">);</span>
+    <span class="k">return</span> <span class="nx">noteList</span><span class="p">;</span>
+</pre></div>
+
+
+<p>In <code>PonyNote.jsx</code>, update <code>mapDispatchToProps</code> and <code>submitNote</code> method like we did for adding notes.</p>
+<div class="highlight"><pre><span></span><span class="nx">updateNote</span><span class="o">:</span> <span class="p">(</span><span class="nx">id</span><span class="p">,</span> <span class="nx">text</span><span class="p">)</span> <span class="p">=&gt;</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="nx">dispatch</span><span class="p">(</span><span class="nx">notes</span><span class="p">.</span><span class="nx">updateNote</span><span class="p">(</span><span class="nx">id</span><span class="p">,</span> <span class="nx">text</span><span class="p">));</span>
+<span class="p">},</span>
+</pre></div>
+
+
+<div class="highlight"><pre><span></span><span class="k">this</span><span class="p">.</span><span class="nx">props</span><span class="p">.</span><span class="nx">updateNote</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">state</span><span class="p">.</span><span class="nx">updateNoteId</span><span class="p">,</span> <span class="k">this</span><span class="p">.</span><span class="nx">state</span><span class="p">.</span><span class="nx">text</span><span class="p">).</span><span class="nx">then</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">resetForm</span><span class="p">);</span>
+</pre></div>
+
+
+<p>Now you'll be able to update notes and save it in the database.</p>
+<h4>Deleting Notes</h4>
+<p>Update <code>actions/notes.js</code>'s <code>deleteNote</code> action to send <code>DELETE</code> request to the API server:</p>
+<div class="highlight"><pre><span></span><span class="kr">export</span> <span class="kr">const</span> <span class="nx">deleteNote</span> <span class="o">=</span> <span class="nx">index</span> <span class="p">=&gt;</span> <span class="p">{</span>
+  <span class="k">return</span> <span class="p">(</span><span class="nx">dispatch</span><span class="p">,</span> <span class="nx">getState</span><span class="p">)</span> <span class="p">=&gt;</span> <span class="p">{</span>
+
+    <span class="kd">let</span> <span class="nx">headers</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;Content-Type&quot;</span><span class="o">:</span> <span class="s2">&quot;application/json&quot;</span><span class="p">};</span>
+    <span class="kd">let</span> <span class="nx">noteId</span> <span class="o">=</span> <span class="nx">getState</span><span class="p">().</span><span class="nx">notes</span><span class="p">[</span><span class="nx">index</span><span class="p">].</span><span class="nx">id</span><span class="p">;</span>
+
+    <span class="k">return</span> <span class="nx">fetch</span><span class="p">(</span><span class="sb">`/api/notes/</span><span class="si">${</span><span class="nx">noteId</span><span class="si">}</span><span class="sb">/`</span><span class="p">,</span> <span class="p">{</span><span class="nx">headers</span><span class="p">,</span> <span class="nx">method</span><span class="o">:</span> <span class="s2">&quot;DELETE&quot;</span><span class="p">})</span>
+      <span class="p">.</span><span class="nx">then</span><span class="p">(</span><span class="nx">res</span> <span class="p">=&gt;</span> <span class="p">{</span>
+        <span class="k">if</span> <span class="p">(</span><span class="nx">res</span><span class="p">.</span><span class="nx">ok</span><span class="p">)</span> <span class="p">{</span>
+          <span class="k">return</span> <span class="nx">dispatch</span><span class="p">({</span>
+            <span class="nx">type</span><span class="o">:</span> <span class="s1">&#39;DELETE_NOTE&#39;</span><span class="p">,</span>
+            <span class="nx">index</span>
+          <span class="p">})</span>
+        <span class="p">}</span>
+      <span class="p">})</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>In the <code>DELETE_NOTE</code> reducer in <code>reducers/notes.js</code> make the following changes:</p>
+<div class="highlight"><pre><span></span><span class="k">case</span> <span class="s1">&#39;DELETE_NOTE&#39;</span><span class="o">:</span>
+    <span class="nx">noteList</span><span class="p">.</span><span class="nx">splice</span><span class="p">(</span><span class="nx">action</span><span class="p">.</span><span class="nx">index</span><span class="p">,</span> <span class="mi">1</span><span class="p">);</span>
+    <span class="k">return</span> <span class="nx">noteList</span><span class="p">;</span>
+</pre></div>
+
+
+<h3>Summary</h3>
+<p>Now you'll be able to create, read, update and delete notes using the API built using django-rest-framework. All the notes are stored in redux store in client side and changes will be reflected in the database and persist on reload.</p>
+<p>In next part we'll add authentication to pony note so that multiple users can maintain their notes privately. We'll implement login/signup flow and assosiate notes with users.</p>
+<h3>Reference</h3>
+<ul>
+<li><a href="http://www.django-rest-framework.org/">Django Rest Framework</a></li>
+<li><a href="https://github.com/gaearon/redux-thunk">redux-thunk</a></li>
+<li><a href="https://stackoverflow.com/a/35415559/4726598">How to dispatch a Redux action with a timeout?</a></li>
+<li><a href="https://redux.js.org/advanced/async-actions#async-action-creators">Async Redux actions</a></li>
+</ul>
+    </div>
+    <footer>
+    <hr/>
+      Posted in: <a href="http://v1k45.com/blog/categories/web-development/">Web Development</a>
+      <br />
+      Tags:
+          <a href="http://v1k45.com/blog/tags/python/">python</a>,           <a href="http://v1k45.com/blog/tags/django/">django</a>,           <a href="http://v1k45.com/blog/tags/javascript/">javascript</a>,           <a href="http://v1k45.com/blog/tags/js/">js</a>,           <a href="http://v1k45.com/blog/tags/react/">react</a>,           <a href="http://v1k45.com/blog/tags/django-rest-framework/">django-rest-framework</a>,           <a href="http://v1k45.com/blog/tags/redux/">redux</a><div id="disqus_thread"></div>
+<script>
+  var disqus_config = function () {
+    this.page.url = "http://v1k45.com/blog/modern-django-part-3-creating-an-api-and-integrating-with-react/";
+    this.page.identifier = "modern-django-part-3-creating-an-api-and-integrating-with-react";
+  };
+  (function() { // DON'T EDIT BELOW THIS LINE
+  var d = document, s = d.createElement('script');
+    s.src = 'https://v1k45.disqus.com/embed.js';
+  s.setAttribute('data-timestamp', +new Date());
+  (d.head || d.body).appendChild(s);
+  })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>    </footer>
+  </section>
+		</main>
+
+		<!-- Global site tag (gtag.js) - Google Analytics -->
+		<script async src="https://www.googletagmanager.com/gtag/js?id=UA-114981561-1"></script>
+		<script>
+		  window.dataLayer = window.dataLayer || [];
+		  function gtag(){dataLayer.push(arguments);}
+		  gtag('js', new Date());
+
+		  gtag('config', 'UA-114981561-1');
+		</script>
+
+	<script id="dsq-count-scr" src="//v1k45.disqus.com/count.js" async></script>
+	</body>
+</html>
