@@ -1,0 +1,1145 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+  			<title>Modern Django: Part 4: Adding authentication to React SPA using DRF &mdash; v1k45</title>
+			<meta charset="utf-8" />
+			<meta name="viewport" content="width=device-width" />
+
+			<link href="http://v1k45.com/feeds/all.atom.xml" type="application/atom+xml" rel="alternate" title="v1k45 Full Atom Feed" />
+			<link href="http://v1k45.com/feeds/web-development.atom.xml" type="application/atom+xml" rel="alternate" title="v1k45 Categories Atom Feed" />
+
+			<link rel="stylesheet" href="/theme/css/sakura-dark.css" type="text/css" media="screen" title="no title" charset="utf-8">
+			<link rel="stylesheet" href="/theme/css/pygment.css" type="text/css" media="screen" title="no title" charset="utf-8">
+
+
+
+
+    <meta name="tags" content="python" />
+    <meta name="tags" content="django" />
+    <meta name="tags" content="javascript" />
+    <meta name="tags" content="js" />
+    <meta name="tags" content="react" />
+    <meta name="tags" content="django-rest-framework" />
+    <meta name="tags" content="django-rest-knox" />
+
+
+		<style type="text/css" media="screen">
+			body {
+				font-family: "Helivetica Neue",Helvetica,arial,sans-serif;
+				max-width: 50em;
+			}
+		</style>
+	</head>
+
+	<body>
+        <header>
+			<nav>
+				<a href="/">v1k45</a>
+				[
+						<a href=/>about</a>,&nbsp;
+
+						<a href=/blog/>blog</a>
+							,&nbsp;
+						<a href=https://github.com/v1k45>github</a>
+							,&nbsp;
+						<a href=http://stackoverflow.com/users/4726598/v1k45>stackoverflow</a>
+				]
+			</nav>
+        </header>
+		<main>
+  <section id="content">
+    <header>
+    <h2>
+      <a href="http://v1k45.com/blog/modern-django-part-4-adding-authentication-to-react-spa-using-drf/" rel="bookmark"
+       title="Permalink to Modern Django: Part 4: Adding authentication to React SPA using DRF">Modern Django: Part 4: Adding authentication to React SPA using DRF</a></h2>
+    </header>
+    <footer>
+    <time datetime="2018-04-13T21:00:00+05:30">
+        Fri 13 April 2018
+    </time>
+    </footer>
+    <div>
+    <p>In <a href="http://v1k45.com/blog/modern-django-part-3-creating-an-api-and-integrating-with-react/">last post</a> we managed to create/read/update/delete notes directly into the database using API created by Django Rest Framework with React Frontend. In this one will we allow users to maintain separate notes and protect them using authentication.</p>
+<p>The code for this repository is hosted on my github, <a href="https://github.com/v1k45/ponynote">v1k45/ponynote</a>. You can checkout <code>part-4</code> branch to see all the changes done till the end of this part.</p>
+<h3>Associating notes with users</h3>
+<p>In order to allow users have separate notes, we'll need to associate notes with users. We'll start by adding an <code>owner</code> field to the <code>Note</code> model. Update <code>notes/models.py</code>:</p>
+<div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">django.db</span> <span class="kn">import</span> <span class="n">models</span>
+<span class="kn">from</span> <span class="nn">django.contrib.auth.models</span> <span class="kn">import</span> <span class="n">User</span>
+
+
+<span class="k">class</span> <span class="nc">Note</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">text</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mi">255</span><span class="p">)</span>
+    <span class="n">owner</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span><span class="n">User</span><span class="p">,</span> <span class="n">related_name</span><span class="o">=</span><span class="s2">&quot;notes&quot;</span><span class="p">,</span>
+                              <span class="n">on_delete</span><span class="o">=</span><span class="n">models</span><span class="o">.</span><span class="n">CASCADE</span><span class="p">,</span> <span class="n">null</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+    <span class="n">created_at</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">DateTimeField</span><span class="p">(</span><span class="n">auto_now_add</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+</pre></div>
+
+
+<p>Make migrations and migrate the changes to database.</p>
+<div class="highlight"><pre><span></span>(ponynote)  $ ./manage.py makemigrations
+Migrations for &#39;notes&#39;:
+  notes/migrations/0002_note_owner.py
+    - Add field owner to note
+(ponynote)  $ ./manage.py migrate
+Operations to perform:
+  Apply all migrations: admin, auth, contenttypes, notes, sessions
+Running migrations:
+  Applying notes.0002_note_owner... OK
+</pre></div>
+
+
+<h3>Creating Auth APIs</h3>
+<p>We need to create APIs for basic authentication actions like registration, user endpoint, login and logout.</p>
+<p>Django Rest Framework allows various kinds of authentication techniques including BasicAuth, SessionAuth, TokenAuth. For single page applications, Token Authentication and their variations like JSON Web Tokens (JWT) are quite common choices.</p>
+<h4>Installing and setting up <code>knox</code></h4>
+<p>DRF ships with a built-in TokenAuthentication feature but it is not ideal for user facing SPAs because of it lacks basic features. Instead, we will use <code>django-rest-knox</code>, It is similar to DRF's TokenAuth but much better and robust.</p>
+<p>Start by installing it:</p>
+<div class="highlight"><pre><span></span>(ponynote)  $ pip install django-rest-knox
+</pre></div>
+
+
+<p>Update <code>ponynote/settings.py</code> by adding <code>knox</code> and <code>rest_framework</code> to  INSTALLED_APPS and setting knox's TokenAuthentication class as default in DRF.</p>
+<div class="highlight"><pre><span></span><span class="n">INSTALLED_APPS</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s1">&#39;rest_framework&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;knox&#39;</span><span class="p">,</span>
+<span class="p">]</span>
+
+<span class="c1"># Rest framework settings</span>
+<span class="n">REST_FRAMEWORK</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;DEFAULT_AUTHENTICATION_CLASSES&#39;</span><span class="p">:</span> <span class="p">(</span><span class="s1">&#39;knox.auth.TokenAuthentication&#39;</span><span class="p">,),</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>Add <code>knox</code> routes to <code>ponynote/urls.py</code>:</p>
+<div class="highlight"><pre><span></span><span class="n">urlpatterns</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="n">url</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;^api/&#39;</span><span class="p">,</span> <span class="n">include</span><span class="p">(</span><span class="n">endpoints</span><span class="p">)),</span>
+    <span class="n">url</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;^api/auth/&#39;</span><span class="p">,</span> <span class="n">include</span><span class="p">(</span><span class="s1">&#39;knox.urls&#39;</span><span class="p">)),</span>
+    <span class="n">url</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;^&#39;</span><span class="p">,</span> <span class="n">TemplateView</span><span class="o">.</span><span class="n">as_view</span><span class="p">(</span><span class="n">template_name</span><span class="o">=</span><span class="s2">&quot;index.html&quot;</span><span class="p">)),</span>
+<span class="p">]</span>
+</pre></div>
+
+
+<p>Finally, migrate the database:</p>
+<div class="highlight"><pre><span></span>(ponynote)  $ ./manage.py migrate
+Operations to perform:
+  Apply all migrations: admin, auth, contenttypes, knox, notes, sessions
+Running migrations:
+  Applying knox.0001_initial... OK
+  Applying knox.0002_auto_20150916_1425... OK
+  Applying knox.0003_auto_20150916_1526... OK
+  Applying knox.0004_authtoken_expires... OK
+  Applying knox.0005_authtoken_token_key... OK
+  Applying knox.0006_auto_20160818_0932... OK
+</pre></div>
+
+
+<h4>Creating a Registration API</h4>
+<p>To allow users to create accounts, we will create an API for registration. Ideally you'd use feature-rich third party applications like <code>allauth</code>, <code>rest-auth</code>, <code>djoser</code> etc to handle all kinds of authentication related needs. But since our application is simple, we are better off our own views/endpoints.</p>
+<p>Start by creating <code>CreateUserSerializer</code> and <code>UserSerializer</code> in <code>notes/serializers.py</code>:</p>
+<div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">rest_framework</span> <span class="kn">import</span> <span class="n">serializers</span>
+<span class="kn">from</span> <span class="nn">django.contrib.auth.models</span> <span class="kn">import</span> <span class="n">User</span>
+
+<span class="k">class</span> <span class="nc">CreateUserSerializer</span><span class="p">(</span><span class="n">serializers</span><span class="o">.</span><span class="n">ModelSerializer</span><span class="p">):</span>
+    <span class="k">class</span> <span class="nc">Meta</span><span class="p">:</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">User</span>
+        <span class="n">fields</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;id&#39;</span><span class="p">,</span> <span class="s1">&#39;username&#39;</span><span class="p">,</span> <span class="s1">&#39;password&#39;</span><span class="p">)</span>
+        <span class="n">extra_kwargs</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;password&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;write_only&#39;</span><span class="p">:</span> <span class="bp">True</span><span class="p">}}</span>
+
+    <span class="k">def</span> <span class="nf">create</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">validated_data</span><span class="p">):</span>
+        <span class="n">user</span> <span class="o">=</span> <span class="n">User</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">create_user</span><span class="p">(</span><span class="n">validated_data</span><span class="p">[</span><span class="s1">&#39;username&#39;</span><span class="p">],</span>
+                                        <span class="bp">None</span><span class="p">,</span>
+                                        <span class="n">validated_data</span><span class="p">[</span><span class="s1">&#39;password&#39;</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">user</span>
+
+
+<span class="k">class</span> <span class="nc">UserSerializer</span><span class="p">(</span><span class="n">serializers</span><span class="o">.</span><span class="n">ModelSerializer</span><span class="p">):</span>
+    <span class="k">class</span> <span class="nc">Meta</span><span class="p">:</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">User</span>
+        <span class="n">fields</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;id&#39;</span><span class="p">,</span> <span class="s1">&#39;username&#39;</span><span class="p">)</span>
+</pre></div>
+
+
+<p>We'll use <code>CreateUserSerializer</code> for validating input for registration. We aren't using <code>email</code>, users will login with username and password. <code>UserSerializer</code> will be used to return the output after user has successfully registered.</p>
+<p>Next, create the registration API, In <code>notes/api.py</code>:</p>
+<div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">rest_framework</span> <span class="kn">import</span> <span class="n">viewsets</span><span class="p">,</span> <span class="n">permissions</span><span class="p">,</span> <span class="n">generics</span>
+<span class="kn">from</span> <span class="nn">rest_framework.response</span> <span class="kn">import</span> <span class="n">Response</span>
+
+<span class="kn">from</span> <span class="nn">knox.models</span> <span class="kn">import</span> <span class="n">AuthToken</span>
+
+<span class="kn">from</span> <span class="nn">.models</span> <span class="kn">import</span> <span class="n">Note</span>
+<span class="kn">from</span> <span class="nn">.serializers</span> <span class="kn">import</span> <span class="n">NoteSerializer</span><span class="p">,</span> <span class="n">CreateUserSerializer</span><span class="p">,</span> <span class="n">UserSerializer</span>
+
+
+<span class="k">class</span> <span class="nc">RegistrationAPI</span><span class="p">(</span><span class="n">generics</span><span class="o">.</span><span class="n">GenericAPIView</span><span class="p">):</span>
+    <span class="n">serializer_class</span> <span class="o">=</span> <span class="n">CreateUserSerializer</span>
+
+    <span class="k">def</span> <span class="nf">post</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">serializer</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_serializer</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">request</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
+        <span class="n">serializer</span><span class="o">.</span><span class="n">is_valid</span><span class="p">(</span><span class="n">raise_exception</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+        <span class="n">user</span> <span class="o">=</span> <span class="n">serializer</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">Response</span><span class="p">({</span>
+            <span class="s2">&quot;user&quot;</span><span class="p">:</span> <span class="n">UserSerializer</span><span class="p">(</span><span class="n">user</span><span class="p">,</span> <span class="n">context</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">get_serializer_context</span><span class="p">())</span><span class="o">.</span><span class="n">data</span><span class="p">,</span>
+            <span class="s2">&quot;token&quot;</span><span class="p">:</span> <span class="n">AuthToken</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">user</span><span class="p">)</span>
+        <span class="p">})</span>
+</pre></div>
+
+
+<p>The API is pretty staight-forward, we validate the user input and create an account if the validation passes. In the response, we return the user object in serialized format and an authentication token which will be used by the application to perform user-specific api calls.</p>
+<p>Update the API endpoints to include registration API, In <code>notes/endpoints.py</code>:</p>
+<div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">.api</span> <span class="kn">import</span> <span class="n">NoteViewSet</span><span class="p">,</span> <span class="n">RegistrationAPI</span>
+
+<span class="n">urlpatterns</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="n">url</span><span class="p">(</span><span class="s2">&quot;^&quot;</span><span class="p">,</span> <span class="n">include</span><span class="p">(</span><span class="n">router</span><span class="o">.</span><span class="n">urls</span><span class="p">)),</span>
+    <span class="n">url</span><span class="p">(</span><span class="s2">&quot;^auth/register/$&quot;</span><span class="p">,</span> <span class="n">RegistrationAPI</span><span class="o">.</span><span class="n">as_view</span><span class="p">()),</span>
+<span class="p">]</span>
+</pre></div>
+
+
+<p>After the endpoint is added, you can test the endpoint using curl:</p>
+<div class="highlight"><pre><span></span>$ curl --request POST <span class="se">\</span>
+--url http://localhost:8000/api/auth/register/ <span class="se">\</span>
+--header <span class="s1">&#39;content-type: application/json&#39;</span> <span class="se">\</span>
+--data <span class="s1">&#39;{</span>
+<span class="s1">  &quot;username&quot;: &quot;user1&quot;,</span>
+<span class="s1">  &quot;password&quot;: &quot;hunter2&quot;</span>
+<span class="s1">}&#39;</span>
+</pre></div>
+
+
+<p>This will create the user with username <code>user1</code> and password <code>hunter2</code>. You'll get the following response from API:</p>
+<div class="highlight"><pre><span></span>{&quot;user&quot;:{&quot;id&quot;:1,&quot;username&quot;:&quot;user1&quot;},&quot;token&quot;:&quot;&lt;TOKEN HERE&gt;&quot;}
+</pre></div>
+
+
+<p>It handles valiadtion cases for fields, including uniquness of username. If you try to send the same data twice, you'll see that the API throws an error that the username needs to be unique.</p>
+<h4>Creating login API</h4>
+<p>Now that users can create account, we need a way for our users to log into the application and retrieve the authentication token for user-related actions.</p>
+<p>First create a <code>LoginUserSerializer</code> in <code>notes/serializers.py</code>:</p>
+<div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">django.contrib.auth</span> <span class="kn">import</span> <span class="n">authenticate</span>
+
+
+<span class="k">class</span> <span class="nc">LoginUserSerializer</span><span class="p">(</span><span class="n">serializers</span><span class="o">.</span><span class="n">Serializer</span><span class="p">):</span>
+    <span class="n">username</span> <span class="o">=</span> <span class="n">serializers</span><span class="o">.</span><span class="n">CharField</span><span class="p">()</span>
+    <span class="n">password</span> <span class="o">=</span> <span class="n">serializers</span><span class="o">.</span><span class="n">CharField</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="n">user</span> <span class="o">=</span> <span class="n">authenticate</span><span class="p">(</span><span class="o">**</span><span class="n">data</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">user</span> <span class="ow">and</span> <span class="n">user</span><span class="o">.</span><span class="n">is_active</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">user</span>
+        <span class="k">raise</span> <span class="n">serializers</span><span class="o">.</span><span class="n">ValidationError</span><span class="p">(</span><span class="s2">&quot;Unable to log in with provided credentials.&quot;</span><span class="p">)</span>
+</pre></div>
+
+
+<p>The <code>validate</code> method of this serializer checks if the username and password are correct combination using django's <code>authenticate</code> function. It also makes sure the user is active.</p>
+<p>Then create a <code>LoginAPI</code> in <code>notes/api.py</code>:</p>
+<div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">.serializers</span> <span class="kn">import</span> <span class="p">(</span><span class="n">NoteSerializer</span><span class="p">,</span> <span class="n">CreateUserSerializer</span><span class="p">,</span>
+                          <span class="n">UserSerializer</span><span class="p">,</span> <span class="n">LoginUserSerializer</span><span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">LoginAPI</span><span class="p">(</span><span class="n">generics</span><span class="o">.</span><span class="n">GenericAPIView</span><span class="p">):</span>
+    <span class="n">serializer_class</span> <span class="o">=</span> <span class="n">LoginUserSerializer</span>
+
+    <span class="k">def</span> <span class="nf">post</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">serializer</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_serializer</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">request</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
+        <span class="n">serializer</span><span class="o">.</span><span class="n">is_valid</span><span class="p">(</span><span class="n">raise_exception</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+        <span class="n">user</span> <span class="o">=</span> <span class="n">serializer</span><span class="o">.</span><span class="n">validated_data</span>
+        <span class="k">return</span> <span class="n">Response</span><span class="p">({</span>
+            <span class="s2">&quot;user&quot;</span><span class="p">:</span> <span class="n">UserSerializer</span><span class="p">(</span><span class="n">user</span><span class="p">,</span> <span class="n">context</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">get_serializer_context</span><span class="p">())</span><span class="o">.</span><span class="n">data</span><span class="p">,</span>
+            <span class="s2">&quot;token&quot;</span><span class="p">:</span> <span class="n">AuthToken</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">user</span><span class="p">)</span>
+        <span class="p">})</span>
+</pre></div>
+
+
+<p>After this, add the API to API endpoints in <code>notes/endpoints.py</code>:</p>
+<div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">.api</span> <span class="kn">import</span> <span class="n">NoteViewSet</span><span class="p">,</span> <span class="n">RegistrationAPI</span><span class="p">,</span> <span class="n">LoginAPI</span>
+
+<span class="n">urlpatterns</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="n">url</span><span class="p">(</span><span class="s2">&quot;^&quot;</span><span class="p">,</span> <span class="n">include</span><span class="p">(</span><span class="n">router</span><span class="o">.</span><span class="n">urls</span><span class="p">)),</span>
+    <span class="n">url</span><span class="p">(</span><span class="s2">&quot;^auth/register/$&quot;</span><span class="p">,</span> <span class="n">RegistrationAPI</span><span class="o">.</span><span class="n">as_view</span><span class="p">()),</span>
+    <span class="n">url</span><span class="p">(</span><span class="s2">&quot;^auth/login/$&quot;</span><span class="p">,</span> <span class="n">LoginAPI</span><span class="o">.</span><span class="n">as_view</span><span class="p">()),</span>
+<span class="p">]</span>
+</pre></div>
+
+
+<p>That will register our login API to endpoints. We can test it using curl:</p>
+<div class="highlight"><pre><span></span>$ curl --request POST <span class="se">\</span>
+  --url http://localhost:8000/api/auth/login/ <span class="se">\</span>
+  --header <span class="s1">&#39;content-type: application/json&#39;</span> <span class="se">\</span>
+  --data <span class="s1">&#39;{</span>
+<span class="s1">    &quot;username&quot;: &quot;user1&quot;,</span>
+<span class="s1">    &quot;password&quot;: &quot;hunter2&quot;</span>
+<span class="s1">}&#39;</span>
+</pre></div>
+
+
+<h4>User data endpoint</h4>
+<p>Now that the login and registration API are working, we need an API to return user data of the logged in user. We will use this API to determine if the user is logged in and retrieve their token for performing user specific api calls.</p>
+<p>Since we already have a <code>UserSerializer</code>, we can create <code>UserAPI</code> right-away and add it to endpoints.</p>
+<p>Add the following in <code>notes/api.py</code></p>
+<div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">UserAPI</span><span class="p">(</span><span class="n">generics</span><span class="o">.</span><span class="n">RetrieveAPIView</span><span class="p">):</span>
+    <span class="n">permission_classes</span> <span class="o">=</span> <span class="p">[</span><span class="n">permissions</span><span class="o">.</span><span class="n">IsAuthenticated</span><span class="p">,</span> <span class="p">]</span>
+    <span class="n">serializer_class</span> <span class="o">=</span> <span class="n">UserSerializer</span>
+
+    <span class="k">def</span> <span class="nf">get_object</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">user</span>
+</pre></div>
+
+
+<p>The above API will return user data for the authenticated user or 4XX range errors if user is not authenticated or token is incorrect.</p>
+<p>Add the API to <code>notes/endpoints.py</code>:</p>
+<div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">.api</span> <span class="kn">import</span> <span class="n">NoteViewSet</span><span class="p">,</span> <span class="n">RegistrationAPI</span><span class="p">,</span> <span class="n">LoginAPI</span><span class="p">,</span> <span class="n">UserAPI</span>
+
+<span class="n">urlpatterns</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="n">url</span><span class="p">(</span><span class="s2">&quot;^&quot;</span><span class="p">,</span> <span class="n">include</span><span class="p">(</span><span class="n">router</span><span class="o">.</span><span class="n">urls</span><span class="p">)),</span>
+    <span class="n">url</span><span class="p">(</span><span class="s2">&quot;^auth/register/$&quot;</span><span class="p">,</span> <span class="n">RegistrationAPI</span><span class="o">.</span><span class="n">as_view</span><span class="p">()),</span>
+    <span class="n">url</span><span class="p">(</span><span class="s2">&quot;^auth/login/$&quot;</span><span class="p">,</span> <span class="n">LoginAPI</span><span class="o">.</span><span class="n">as_view</span><span class="p">()),</span>
+    <span class="n">url</span><span class="p">(</span><span class="s2">&quot;^auth/user/$&quot;</span><span class="p">,</span> <span class="n">UserAPI</span><span class="o">.</span><span class="n">as_view</span><span class="p">()),</span>
+<span class="p">]</span>
+</pre></div>
+
+
+<p>You can test the API using the auth token you retrieved from the <code>LoginAPI</code>:</p>
+<div class="highlight"><pre><span></span>$ curl --request GET <span class="se">\</span>
+  --url http://localhost:8000/api/auth/user/ <span class="se">\</span>
+  --header <span class="s1">&#39;authorization: Token YOUR_API_TOKEN_HERE&#39;</span> <span class="se">\</span>
+  --header <span class="s1">&#39;content-type: application/json&#39;</span> <span class="se">\</span>
+</pre></div>
+
+
+<p>The above request will return the user object of the authenticated user.</p>
+<h3>Restricting NotesAPI to authenticated users</h3>
+<p>Now that all authentication related APIs are working, we can update <code>NoteViewSet</code> and <code>NoteSerializer</code> to restict access to authenticated users only.</p>
+<p>Start by updating <code>NoteViewSet</code> in <code>notes/api.py</code>:</p>
+<div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">NoteViewSet</span><span class="p">(</span><span class="n">viewsets</span><span class="o">.</span><span class="n">ModelViewSet</span><span class="p">):</span>
+    <span class="n">permission_classes</span> <span class="o">=</span> <span class="p">[</span><span class="n">permissions</span><span class="o">.</span><span class="n">IsAuthenticated</span><span class="p">,</span> <span class="p">]</span>
+    <span class="n">serializer_class</span> <span class="o">=</span> <span class="n">NoteSerializer</span>
+
+    <span class="k">def</span> <span class="nf">get_queryset</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">notes</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">perform_create</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">serializer</span><span class="p">):</span>
+        <span class="n">serializer</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">owner</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="p">)</span>
+</pre></div>
+
+
+<p>We did the following changes here:</p>
+<ul>
+<li>
+<p>Changed the API access from <code>AllowAny</code> to <code>IsAuthenticated</code>. This will require users to login/send authentication token in order to use this API.</p>
+</li>
+<li>
+<p>Override <code>perform_create</code> method to save owner of the note while creating it.</p>
+</li>
+<li>
+<p>Replace <code>queryset</code> attribute with <code>get_queryset</code> method and return the notes which the authenticated user owns.</p>
+</li>
+</ul>
+<p>After this, update the notes router registration to add a <code>base_name</code>. It is required if the viewset does not have a <code>queryset</code> attribute:</p>
+<div class="highlight"><pre><span></span>router.register(&#39;notes&#39;, NoteViewSet, &#39;notes&#39;)
+</pre></div>
+
+
+<p>This will make sure the notes api is only accessible to authenticated users and the users get to see and modify their own notes only.</p>
+<h3>Bringing Authentication to React app</h3>
+<p>Authentication flow in the react application will be pretty simple, we'll redirect user to the login page if they are not logged in and then redirect back to the notes page after login is successful.</p>
+<p><img alt="react app authentication flow" src="http://v1k45.com/images/modern-django-4-auth-flow.png"></p>
+<h4>Login page</h4>
+<p>Let's start by creating a non-functional login page to which we will redirect un-authenticated users:</p>
+<p>Create <code>frontend/src/components/Login.jsx</code>:</p>
+<div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">React</span><span class="o">,</span> <span class="p">{</span><span class="n">Component</span><span class="p">}</span> <span class="kn">from</span> <span class="s2">&quot;react&quot;</span><span class="p">;</span>
+<span class="kn">import</span> <span class="p">{</span><span class="n">connect</span><span class="p">}</span> <span class="kn">from</span> <span class="s2">&quot;react-redux&quot;</span><span class="p">;</span>
+
+<span class="kn">import</span> <span class="p">{</span><span class="n">Link</span><span class="p">}</span> <span class="kn">from</span> <span class="s2">&quot;react-router-dom&quot;</span><span class="p">;</span>
+
+
+<span class="k">class</span> <span class="nc">Login</span> <span class="n">extends</span> <span class="n">Component</span> <span class="p">{</span>
+
+  <span class="n">state</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="n">username</span><span class="p">:</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+    <span class="n">password</span><span class="p">:</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+  <span class="p">}</span>
+
+  <span class="n">onSubmit</span> <span class="o">=</span> <span class="n">e</span> <span class="o">=&gt;</span> <span class="p">{</span>
+    <span class="n">e</span><span class="o">.</span><span class="n">preventDefault</span><span class="p">();</span>
+    <span class="n">console</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;Not implemented!!1&quot;</span><span class="p">);</span>
+  <span class="p">}</span>
+
+  <span class="n">render</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="p">(</span>
+      <span class="o">&lt;</span><span class="n">form</span> <span class="n">onSubmit</span><span class="o">=</span><span class="p">{</span><span class="n">this</span><span class="o">.</span><span class="n">onSubmit</span><span class="p">}</span><span class="o">&gt;</span>
+        <span class="o">&lt;</span><span class="n">fieldset</span><span class="o">&gt;</span>
+          <span class="o">&lt;</span><span class="n">legend</span><span class="o">&gt;</span><span class="n">Login</span><span class="o">&lt;/</span><span class="n">legend</span><span class="o">&gt;</span>
+          <span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;</span>
+            <span class="o">&lt;</span><span class="n">label</span> <span class="n">htmlFor</span><span class="o">=</span><span class="s2">&quot;username&quot;</span><span class="o">&gt;</span><span class="n">Username</span><span class="o">&lt;/</span><span class="n">label</span><span class="o">&gt;</span>
+            <span class="o">&lt;</span><span class="nb">input</span>
+              <span class="nb">type</span><span class="o">=</span><span class="s2">&quot;text&quot;</span> <span class="nb">id</span><span class="o">=</span><span class="s2">&quot;username&quot;</span>
+              <span class="n">onChange</span><span class="o">=</span><span class="p">{</span><span class="n">e</span> <span class="o">=&gt;</span> <span class="n">this</span><span class="o">.</span><span class="n">setState</span><span class="p">({</span><span class="n">username</span><span class="p">:</span> <span class="n">e</span><span class="o">.</span><span class="n">target</span><span class="o">.</span><span class="n">value</span><span class="p">})}</span> <span class="o">/&gt;</span>
+          <span class="o">&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
+          <span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;</span>
+            <span class="o">&lt;</span><span class="n">label</span> <span class="n">htmlFor</span><span class="o">=</span><span class="s2">&quot;password&quot;</span><span class="o">&gt;</span><span class="n">Password</span><span class="o">&lt;/</span><span class="n">label</span><span class="o">&gt;</span>
+            <span class="o">&lt;</span><span class="nb">input</span>
+              <span class="nb">type</span><span class="o">=</span><span class="s2">&quot;password&quot;</span> <span class="nb">id</span><span class="o">=</span><span class="s2">&quot;password&quot;</span>
+              <span class="n">onChange</span><span class="o">=</span><span class="p">{</span><span class="n">e</span> <span class="o">=&gt;</span> <span class="n">this</span><span class="o">.</span><span class="n">setState</span><span class="p">({</span><span class="n">password</span><span class="p">:</span> <span class="n">e</span><span class="o">.</span><span class="n">target</span><span class="o">.</span><span class="n">value</span><span class="p">})}</span> <span class="o">/&gt;</span>
+          <span class="o">&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
+          <span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;</span>
+            <span class="o">&lt;</span><span class="n">button</span> <span class="nb">type</span><span class="o">=</span><span class="s2">&quot;submit&quot;</span><span class="o">&gt;</span><span class="n">Login</span><span class="o">&lt;/</span><span class="n">button</span><span class="o">&gt;</span>
+          <span class="o">&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
+
+          <span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;</span>
+            <span class="n">Don</span><span class="s1">&#39;t have an account? &lt;Link to=&quot;/register&quot;&gt;Register&lt;/Link&gt;</span>
+          <span class="o">&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
+        <span class="o">&lt;/</span><span class="n">fieldset</span><span class="o">&gt;</span>
+      <span class="o">&lt;/</span><span class="n">form</span><span class="o">&gt;</span>
+    <span class="p">)</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="n">const</span> <span class="n">mapStateToProps</span> <span class="o">=</span> <span class="n">state</span> <span class="o">=&gt;</span> <span class="p">{</span>
+  <span class="k">return</span> <span class="p">{};</span>
+<span class="p">}</span>
+
+<span class="n">const</span> <span class="n">mapDispatchToProps</span> <span class="o">=</span> <span class="n">dispatch</span> <span class="o">=&gt;</span> <span class="p">{</span>
+  <span class="k">return</span> <span class="p">{};</span>
+<span class="p">}</span>
+
+<span class="n">export</span> <span class="n">default</span> <span class="n">connect</span><span class="p">(</span><span class="n">mapStateToProps</span><span class="p">,</span> <span class="n">mapDispatchToProps</span><span class="p">)(</span><span class="n">Login</span><span class="p">);</span>
+</pre></div>
+
+
+<p>Then add login route to <code>App.js</code>:</p>
+<div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">Login</span> <span class="nn">from</span> <span class="s2">&quot;./components/Login&quot;</span><span class="p">;</span>
+
+<span class="k">class</span> <span class="nc">App</span> <span class="n">extends</span> <span class="n">Component</span> <span class="p">{</span>
+  <span class="n">render</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="p">(</span>
+      <span class="o">&lt;</span><span class="n">Provider</span> <span class="n">store</span><span class="o">=</span><span class="p">{</span><span class="n">store</span><span class="p">}</span><span class="o">&gt;</span>
+        <span class="o">&lt;</span><span class="n">BrowserRouter</span><span class="o">&gt;</span>
+          <span class="o">&lt;</span><span class="n">Switch</span><span class="o">&gt;</span>
+            <span class="o">&lt;</span><span class="n">Route</span> <span class="n">exact</span> <span class="n">path</span><span class="o">=</span><span class="s2">&quot;/&quot;</span> <span class="n">component</span><span class="o">=</span><span class="p">{</span><span class="n">PonyNote</span><span class="p">}</span> <span class="o">/&gt;</span>
+            <span class="o">&lt;</span><span class="n">Route</span> <span class="n">exact</span> <span class="n">path</span><span class="o">=</span><span class="s2">&quot;/login&quot;</span> <span class="n">component</span><span class="o">=</span><span class="p">{</span><span class="n">Login</span><span class="p">}</span> <span class="o">/&gt;</span>
+            <span class="o">&lt;</span><span class="n">Route</span> <span class="n">component</span><span class="o">=</span><span class="p">{</span><span class="n">NotFound</span><span class="p">}</span> <span class="o">/&gt;</span>
+          <span class="o">&lt;/</span><span class="n">Switch</span><span class="o">&gt;</span>
+        <span class="o">&lt;/</span><span class="n">BrowserRouter</span><span class="o">&gt;</span>
+      <span class="o">&lt;/</span><span class="n">Provider</span><span class="o">&gt;</span>
+    <span class="p">);</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="n">export</span> <span class="n">default</span> <span class="n">App</span><span class="p">;</span>
+</pre></div>
+
+
+<p>Then go to <a href="http://localhost:8000/login">localhost:8000/login</a>, you'll see the login page:</p>
+<p><img alt="login page" src="http://v1k45.com/images/modern-django-4-login-page.png"></p>
+<h4>Auth actions and reducers</h4>
+<p>To make the non-functional login page functional and restrict access on the notes page to only authenticated users, we'll need to add some actions and an authentication reducer.</p>
+<h5>Authentication reducer</h5>
+<p>Start by creating an <code>auth.js</code> file in <code>frontend/src/reducers/</code> and add reducer code:</p>
+<div class="highlight"><pre><span></span><span class="kr">const</span> <span class="nx">initialState</span> <span class="o">=</span> <span class="p">{</span>
+  <span class="nx">token</span><span class="o">:</span> <span class="nx">localStorage</span><span class="p">.</span><span class="nx">getItem</span><span class="p">(</span><span class="s2">&quot;token&quot;</span><span class="p">),</span>
+  <span class="nx">isAuthenticated</span><span class="o">:</span> <span class="kc">null</span><span class="p">,</span>
+  <span class="nx">isLoading</span><span class="o">:</span> <span class="kc">true</span><span class="p">,</span>
+  <span class="nx">user</span><span class="o">:</span> <span class="kc">null</span><span class="p">,</span>
+  <span class="nx">errors</span><span class="o">:</span> <span class="p">{},</span>
+<span class="p">};</span>
+
+
+<span class="kr">export</span> <span class="k">default</span> <span class="kd">function</span> <span class="nx">auth</span><span class="p">(</span><span class="nx">state</span><span class="o">=</span><span class="nx">initialState</span><span class="p">,</span> <span class="nx">action</span><span class="p">)</span> <span class="p">{</span>
+
+  <span class="k">switch</span> <span class="p">(</span><span class="nx">action</span><span class="p">.</span><span class="nx">type</span><span class="p">)</span> <span class="p">{</span>
+
+    <span class="k">case</span> <span class="s1">&#39;USER_LOADING&#39;</span><span class="o">:</span>
+      <span class="k">return</span> <span class="p">{...</span><span class="nx">state</span><span class="p">,</span> <span class="nx">isLoading</span><span class="o">:</span> <span class="kc">true</span><span class="p">};</span>
+
+    <span class="k">case</span> <span class="s1">&#39;USER_LOADED&#39;</span><span class="o">:</span>
+      <span class="k">return</span> <span class="p">{...</span><span class="nx">state</span><span class="p">,</span> <span class="nx">isAuthenticated</span><span class="o">:</span> <span class="kc">true</span><span class="p">,</span> <span class="nx">isLoading</span><span class="o">:</span> <span class="kc">false</span><span class="p">,</span> <span class="nx">user</span><span class="o">:</span> <span class="nx">action</span><span class="p">.</span><span class="nx">user</span><span class="p">};</span>
+
+    <span class="k">case</span> <span class="s1">&#39;LOGIN_SUCCESSFUL&#39;</span><span class="o">:</span>
+      <span class="nx">localStorage</span><span class="p">.</span><span class="nx">setItem</span><span class="p">(</span><span class="s2">&quot;token&quot;</span><span class="p">,</span> <span class="nx">action</span><span class="p">.</span><span class="nx">data</span><span class="p">.</span><span class="nx">token</span><span class="p">);</span>
+      <span class="k">return</span> <span class="p">{...</span><span class="nx">state</span><span class="p">,</span> <span class="p">...</span><span class="nx">action</span><span class="p">.</span><span class="nx">data</span><span class="p">,</span> <span class="nx">isAuthenticated</span><span class="o">:</span> <span class="kc">true</span><span class="p">,</span> <span class="nx">isLoading</span><span class="o">:</span> <span class="kc">false</span><span class="p">,</span> <span class="nx">errors</span><span class="o">:</span> <span class="kc">null</span><span class="p">};</span>
+
+    <span class="k">case</span> <span class="s1">&#39;AUTHENTICATION_ERROR&#39;</span><span class="o">:</span>
+    <span class="k">case</span> <span class="s1">&#39;LOGIN_FAILED&#39;</span><span class="o">:</span>
+    <span class="k">case</span> <span class="s1">&#39;LOGOUT_SUCCESSFUL&#39;</span><span class="o">:</span>
+      <span class="nx">localStorage</span><span class="p">.</span><span class="nx">removeItem</span><span class="p">(</span><span class="s2">&quot;token&quot;</span><span class="p">);</span>
+      <span class="k">return</span> <span class="p">{...</span><span class="nx">state</span><span class="p">,</span> <span class="nx">errors</span><span class="o">:</span> <span class="nx">action</span><span class="p">.</span><span class="nx">data</span><span class="p">,</span> <span class="nx">token</span><span class="o">:</span> <span class="kc">null</span><span class="p">,</span> <span class="nx">user</span><span class="o">:</span> <span class="kc">null</span><span class="p">,</span>
+        <span class="nx">isAuthenticated</span><span class="o">:</span> <span class="kc">false</span><span class="p">,</span> <span class="nx">isLoading</span><span class="o">:</span> <span class="kc">false</span><span class="p">};</span>
+
+    <span class="k">default</span><span class="o">:</span>
+      <span class="k">return</span> <span class="nx">state</span><span class="p">;</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>Noticed the token value is being retrieved from <code>localStorage</code>? We'll store the authentication token in localStorage and then load it into the <code>auth</code> reducer on initial load. This will help us retain the user authentication state even if the user closes the browser window.</p>
+<p>We are handling user loading and login actions. If a login is successful, the reducer will update the localStorage and redux token. If login fails, user logs out or the application throws authentication related errors, the reducer will remove the auth token, store errors and set the login state accordingly.</p>
+<p>Add this reducer to <code>reducers/index.js</code>:</p>
+<div class="highlight"><pre><span></span><span class="kr">import</span> <span class="nx">auth</span> <span class="nx">from</span> <span class="s2">&quot;./auth&quot;</span><span class="p">;</span>
+
+<span class="kr">const</span> <span class="nx">ponyApp</span> <span class="o">=</span> <span class="nx">combineReducers</span><span class="p">({</span>
+  <span class="nx">notes</span><span class="p">,</span> <span class="nx">auth</span><span class="p">,</span>
+<span class="p">})</span>
+</pre></div>
+
+
+<h5>Authentication actions</h5>
+<p>Create <code>frontend/src/actions/auth.js</code> and add <code>loadUser</code> action to it:</p>
+<div class="highlight"><pre><span></span><span class="kr">export</span> <span class="kr">const</span> <span class="nx">loadUser</span> <span class="o">=</span> <span class="p">()</span> <span class="p">=&gt;</span> <span class="p">{</span>
+  <span class="k">return</span> <span class="p">(</span><span class="nx">dispatch</span><span class="p">,</span> <span class="nx">getState</span><span class="p">)</span> <span class="p">=&gt;</span> <span class="p">{</span>
+    <span class="nx">dispatch</span><span class="p">({</span><span class="nx">type</span><span class="o">:</span> <span class="s2">&quot;USER_LOADING&quot;</span><span class="p">});</span>
+
+    <span class="kr">const</span> <span class="nx">token</span> <span class="o">=</span> <span class="nx">getState</span><span class="p">().</span><span class="nx">auth</span><span class="p">.</span><span class="nx">token</span><span class="p">;</span>
+
+    <span class="kd">let</span> <span class="nx">headers</span> <span class="o">=</span> <span class="p">{</span>
+      <span class="s2">&quot;Content-Type&quot;</span><span class="o">:</span> <span class="s2">&quot;application/json&quot;</span><span class="p">,</span>
+    <span class="p">};</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="nx">token</span><span class="p">)</span> <span class="p">{</span>
+      <span class="nx">headers</span><span class="p">[</span><span class="s2">&quot;Authorization&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="sb">`Token </span><span class="si">${</span><span class="nx">token</span><span class="si">}</span><span class="sb">`</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="k">return</span> <span class="nx">fetch</span><span class="p">(</span><span class="s2">&quot;/api/auth/user/&quot;</span><span class="p">,</span> <span class="p">{</span><span class="nx">headers</span><span class="p">,</span> <span class="p">})</span>
+      <span class="p">.</span><span class="nx">then</span><span class="p">(</span><span class="nx">res</span> <span class="p">=&gt;</span> <span class="p">{</span>
+        <span class="k">if</span> <span class="p">(</span><span class="nx">res</span><span class="p">.</span><span class="nx">status</span> <span class="o">&lt;</span> <span class="mi">500</span><span class="p">)</span> <span class="p">{</span>
+          <span class="k">return</span> <span class="nx">res</span><span class="p">.</span><span class="nx">json</span><span class="p">().</span><span class="nx">then</span><span class="p">(</span><span class="nx">data</span> <span class="p">=&gt;</span> <span class="p">{</span>
+            <span class="k">return</span> <span class="p">{</span><span class="nx">status</span><span class="o">:</span> <span class="nx">res</span><span class="p">.</span><span class="nx">status</span><span class="p">,</span> <span class="nx">data</span><span class="p">};</span>
+          <span class="p">})</span>
+        <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+          <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s2">&quot;Server Error!&quot;</span><span class="p">);</span>
+          <span class="k">throw</span> <span class="nx">res</span><span class="p">;</span>
+        <span class="p">}</span>
+      <span class="p">})</span>
+      <span class="p">.</span><span class="nx">then</span><span class="p">(</span><span class="nx">res</span> <span class="p">=&gt;</span> <span class="p">{</span>
+        <span class="k">if</span> <span class="p">(</span><span class="nx">res</span><span class="p">.</span><span class="nx">status</span> <span class="o">===</span> <span class="mi">200</span><span class="p">)</span> <span class="p">{</span>
+          <span class="nx">dispatch</span><span class="p">({</span><span class="nx">type</span><span class="o">:</span> <span class="s1">&#39;USER_LOADED&#39;</span><span class="p">,</span> <span class="nx">user</span><span class="o">:</span> <span class="nx">res</span><span class="p">.</span><span class="nx">data</span> <span class="p">});</span>
+          <span class="k">return</span> <span class="nx">res</span><span class="p">.</span><span class="nx">data</span><span class="p">;</span>
+        <span class="p">}</span> <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="nx">res</span><span class="p">.</span><span class="nx">status</span> <span class="o">&gt;=</span> <span class="mi">400</span> <span class="o">&amp;&amp;</span> <span class="nx">res</span><span class="p">.</span><span class="nx">status</span> <span class="o">&lt;</span> <span class="mi">500</span><span class="p">)</span> <span class="p">{</span>
+          <span class="nx">dispatch</span><span class="p">({</span><span class="nx">type</span><span class="o">:</span> <span class="s2">&quot;AUTHENTICATION_ERROR&quot;</span><span class="p">,</span> <span class="nx">data</span><span class="o">:</span> <span class="nx">res</span><span class="p">.</span><span class="nx">data</span><span class="p">});</span>
+          <span class="k">throw</span> <span class="nx">res</span><span class="p">.</span><span class="nx">data</span><span class="p">;</span>
+        <span class="p">}</span>
+      <span class="p">})</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>In the above action, we are sending an <code>Authorization</code> header with the token stored in redux store. If this token exists and is correct, the API will return the user object, otherwise, we'll dispatch <code>AUTHENTICATION_ERROR</code> action.</p>
+<p>Update <code>frontend/src/actions/index.js</code> to include <code>auth.js</code>:</p>
+<div class="highlight"><pre><span></span><span class="kr">import</span> <span class="o">*</span> <span class="nx">as</span> <span class="nx">notes</span> <span class="nx">from</span> <span class="s2">&quot;./notes&quot;</span><span class="p">;</span>
+<span class="kr">import</span> <span class="o">*</span> <span class="nx">as</span> <span class="nx">auth</span> <span class="nx">from</span> <span class="s2">&quot;./auth&quot;</span><span class="p">;</span>
+
+<span class="kr">export</span> <span class="p">{</span><span class="nx">notes</span><span class="p">,</span> <span class="nx">auth</span><span class="p">}</span>
+</pre></div>
+
+
+<h4>Restricting anauthorized access</h4>
+<p>In order to stop unauthenticated users from accessing "private" routes we must redirect them to the login page.</p>
+<p>To achieve this, we will create a <code>PrivateRoute</code> method which only renders the target component if the user is authenticated.</p>
+<p>Update <code>frontend/src/App.js</code> file:</p>
+<div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">React</span><span class="o">,</span> <span class="p">{</span> <span class="n">Component</span> <span class="p">}</span> <span class="kn">from</span> <span class="s1">&#39;react&#39;</span><span class="p">;</span>
+<span class="kn">import</span> <span class="p">{</span><span class="n">Route</span><span class="p">,</span> <span class="n">Switch</span><span class="p">,</span> <span class="n">BrowserRouter</span><span class="p">,</span> <span class="n">Redirect</span><span class="p">}</span> <span class="kn">from</span> <span class="s1">&#39;react-router-dom&#39;</span><span class="p">;</span>
+
+<span class="kn">import</span> <span class="p">{</span> <span class="n">Provider</span><span class="p">,</span> <span class="n">connect</span> <span class="p">}</span> <span class="kn">from</span> <span class="s2">&quot;react-redux&quot;</span><span class="p">;</span>
+<span class="kn">import</span> <span class="p">{</span> <span class="n">createStore</span><span class="p">,</span> <span class="n">applyMiddleware</span> <span class="p">}</span> <span class="kn">from</span> <span class="s2">&quot;redux&quot;</span><span class="p">;</span>
+<span class="kn">import</span> <span class="nn">thunk</span> <span class="nn">from</span> <span class="s2">&quot;redux-thunk&quot;</span><span class="p">;</span>
+
+<span class="kn">import</span> <span class="p">{</span><span class="n">auth</span><span class="p">}</span> <span class="kn">from</span> <span class="s2">&quot;./actions&quot;</span><span class="p">;</span>
+<span class="kn">import</span> <span class="nn">ponyApp</span> <span class="nn">from</span> <span class="s2">&quot;./reducers&quot;</span><span class="p">;</span>
+
+<span class="kn">import</span> <span class="nn">PonyNote</span> <span class="nn">from</span> <span class="s2">&quot;./components/PonyNote&quot;</span><span class="p">;</span>
+<span class="kn">import</span> <span class="nn">NotFound</span> <span class="nn">from</span> <span class="s2">&quot;./components/NotFound&quot;</span><span class="p">;</span>
+<span class="kn">import</span> <span class="nn">Login</span> <span class="nn">from</span> <span class="s2">&quot;./components/Login&quot;</span><span class="p">;</span>
+
+<span class="n">let</span> <span class="n">store</span> <span class="o">=</span> <span class="n">createStore</span><span class="p">(</span><span class="n">ponyApp</span><span class="p">,</span> <span class="n">applyMiddleware</span><span class="p">(</span><span class="n">thunk</span><span class="p">));</span>
+
+<span class="k">class</span> <span class="nc">RootContainerComponent</span> <span class="n">extends</span> <span class="n">Component</span> <span class="p">{</span>
+
+  <span class="n">componentDidMount</span><span class="p">()</span> <span class="p">{</span>
+    <span class="n">this</span><span class="o">.</span><span class="n">props</span><span class="o">.</span><span class="n">loadUser</span><span class="p">();</span>
+  <span class="p">}</span>
+
+  <span class="n">PrivateRoute</span> <span class="o">=</span> <span class="p">({</span><span class="n">component</span><span class="p">:</span> <span class="n">ChildComponent</span><span class="p">,</span> <span class="o">...</span><span class="n">rest</span><span class="p">})</span> <span class="o">=&gt;</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="o">&lt;</span><span class="n">Route</span> <span class="p">{</span><span class="o">...</span><span class="n">rest</span><span class="p">}</span> <span class="n">render</span><span class="o">=</span><span class="p">{</span><span class="n">props</span> <span class="o">=&gt;</span> <span class="p">{</span>
+      <span class="k">if</span> <span class="p">(</span><span class="n">this</span><span class="o">.</span><span class="n">props</span><span class="o">.</span><span class="n">auth</span><span class="o">.</span><span class="n">isLoading</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">return</span> <span class="o">&lt;</span><span class="n">em</span><span class="o">&gt;</span><span class="n">Loading</span><span class="o">...&lt;/</span><span class="n">em</span><span class="o">&gt;</span><span class="p">;</span>
+      <span class="p">}</span> <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="err">!</span><span class="n">this</span><span class="o">.</span><span class="n">props</span><span class="o">.</span><span class="n">auth</span><span class="o">.</span><span class="n">isAuthenticated</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">return</span> <span class="o">&lt;</span><span class="n">Redirect</span> <span class="n">to</span><span class="o">=</span><span class="s2">&quot;/login&quot;</span> <span class="o">/&gt;</span><span class="p">;</span>
+      <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+        <span class="k">return</span> <span class="o">&lt;</span><span class="n">ChildComponent</span> <span class="p">{</span><span class="o">...</span><span class="n">props</span><span class="p">}</span> <span class="o">/&gt;</span>
+      <span class="p">}</span>
+    <span class="p">}}</span> <span class="o">/&gt;</span>
+  <span class="p">}</span>
+
+  <span class="n">render</span><span class="p">()</span> <span class="p">{</span>
+    <span class="n">let</span> <span class="p">{</span><span class="n">PrivateRoute</span><span class="p">}</span> <span class="o">=</span> <span class="n">this</span><span class="p">;</span>
+    <span class="k">return</span> <span class="p">(</span>
+      <span class="o">&lt;</span><span class="n">BrowserRouter</span><span class="o">&gt;</span>
+        <span class="o">&lt;</span><span class="n">Switch</span><span class="o">&gt;</span>
+          <span class="o">&lt;</span><span class="n">PrivateRoute</span> <span class="n">exact</span> <span class="n">path</span><span class="o">=</span><span class="s2">&quot;/&quot;</span> <span class="n">component</span><span class="o">=</span><span class="p">{</span><span class="n">PonyNote</span><span class="p">}</span> <span class="o">/&gt;</span>
+          <span class="o">&lt;</span><span class="n">Route</span> <span class="n">exact</span> <span class="n">path</span><span class="o">=</span><span class="s2">&quot;/login&quot;</span> <span class="n">component</span><span class="o">=</span><span class="p">{</span><span class="n">Login</span><span class="p">}</span> <span class="o">/&gt;</span>
+          <span class="o">&lt;</span><span class="n">Route</span> <span class="n">component</span><span class="o">=</span><span class="p">{</span><span class="n">NotFound</span><span class="p">}</span> <span class="o">/&gt;</span>
+        <span class="o">&lt;/</span><span class="n">Switch</span><span class="o">&gt;</span>
+      <span class="o">&lt;/</span><span class="n">BrowserRouter</span><span class="o">&gt;</span>
+    <span class="p">);</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="n">const</span> <span class="n">mapStateToProps</span> <span class="o">=</span> <span class="n">state</span> <span class="o">=&gt;</span> <span class="p">{</span>
+  <span class="k">return</span> <span class="p">{</span>
+    <span class="n">auth</span><span class="p">:</span> <span class="n">state</span><span class="o">.</span><span class="n">auth</span><span class="p">,</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="n">const</span> <span class="n">mapDispatchToProps</span> <span class="o">=</span> <span class="n">dispatch</span> <span class="o">=&gt;</span> <span class="p">{</span>
+  <span class="k">return</span> <span class="p">{</span>
+    <span class="n">loadUser</span><span class="p">:</span> <span class="p">()</span> <span class="o">=&gt;</span> <span class="p">{</span>
+      <span class="k">return</span> <span class="n">dispatch</span><span class="p">(</span><span class="n">auth</span><span class="o">.</span><span class="n">loadUser</span><span class="p">());</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="n">let</span> <span class="n">RootContainer</span> <span class="o">=</span> <span class="n">connect</span><span class="p">(</span><span class="n">mapStateToProps</span><span class="p">,</span> <span class="n">mapDispatchToProps</span><span class="p">)(</span><span class="n">RootContainerComponent</span><span class="p">);</span>
+
+<span class="n">export</span> <span class="n">default</span> <span class="k">class</span> <span class="nc">App</span> <span class="n">extends</span> <span class="n">Component</span> <span class="p">{</span>
+  <span class="n">render</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="p">(</span>
+      <span class="o">&lt;</span><span class="n">Provider</span> <span class="n">store</span><span class="o">=</span><span class="p">{</span><span class="n">store</span><span class="p">}</span><span class="o">&gt;</span>
+        <span class="o">&lt;</span><span class="n">RootContainer</span> <span class="o">/&gt;</span>
+      <span class="o">&lt;/</span><span class="n">Provider</span><span class="o">&gt;</span>
+    <span class="p">)</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>In the above code, we moved the contents under <code>Provider</code> to a separate component named <code>RootContainerComponent</code>.</p>
+<p>The <code>RootContainerComponent</code>, as it's name suggests, is the root container of the application and is connected to redux store. It has a <code>PrivateRoute</code> method which changes the component to be rendered when a route matches depending on the authentication state of the application. If the user is not logged in, it redirects the page to <code>/login</code>.</p>
+<p>The <code>RootContainer</code> is then used inside <code>App</code> component and is placed inside <code>Provider</code> component.</p>
+<p>After this, if you go the notes page (<a href="http://localhost:8000/">localhost:8000</a>), you'll be redirected to the login page.</p>
+<h4>Making login page work</h4>
+<p>While this protects unauthorized access of the notes page, we still don't have the login feature implemented to allow authenticated users to access the page.</p>
+<p>To make it work, create a <code>login</code> function in <code>frontend/src/actions/auth.js</code>:</p>
+<div class="highlight"><pre><span></span><span class="kr">export</span> <span class="kr">const</span> <span class="nx">login</span> <span class="o">=</span> <span class="p">(</span><span class="nx">username</span><span class="p">,</span> <span class="nx">password</span><span class="p">)</span> <span class="p">=&gt;</span> <span class="p">{</span>
+  <span class="k">return</span> <span class="p">(</span><span class="nx">dispatch</span><span class="p">,</span> <span class="nx">getState</span><span class="p">)</span> <span class="p">=&gt;</span> <span class="p">{</span>
+    <span class="kd">let</span> <span class="nx">headers</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;Content-Type&quot;</span><span class="o">:</span> <span class="s2">&quot;application/json&quot;</span><span class="p">};</span>
+    <span class="kd">let</span> <span class="nx">body</span> <span class="o">=</span> <span class="nx">JSON</span><span class="p">.</span><span class="nx">stringify</span><span class="p">({</span><span class="nx">username</span><span class="p">,</span> <span class="nx">password</span><span class="p">});</span>
+
+    <span class="k">return</span> <span class="nx">fetch</span><span class="p">(</span><span class="s2">&quot;/api/auth/login/&quot;</span><span class="p">,</span> <span class="p">{</span><span class="nx">headers</span><span class="p">,</span> <span class="nx">body</span><span class="p">,</span> <span class="nx">method</span><span class="o">:</span> <span class="s2">&quot;POST&quot;</span><span class="p">})</span>
+      <span class="p">.</span><span class="nx">then</span><span class="p">(</span><span class="nx">res</span> <span class="p">=&gt;</span> <span class="p">{</span>
+        <span class="k">if</span> <span class="p">(</span><span class="nx">res</span><span class="p">.</span><span class="nx">status</span> <span class="o">&lt;</span> <span class="mi">500</span><span class="p">)</span> <span class="p">{</span>
+          <span class="k">return</span> <span class="nx">res</span><span class="p">.</span><span class="nx">json</span><span class="p">().</span><span class="nx">then</span><span class="p">(</span><span class="nx">data</span> <span class="p">=&gt;</span> <span class="p">{</span>
+            <span class="k">return</span> <span class="p">{</span><span class="nx">status</span><span class="o">:</span> <span class="nx">res</span><span class="p">.</span><span class="nx">status</span><span class="p">,</span> <span class="nx">data</span><span class="p">};</span>
+          <span class="p">})</span>
+        <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+          <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s2">&quot;Server Error!&quot;</span><span class="p">);</span>
+          <span class="k">throw</span> <span class="nx">res</span><span class="p">;</span>
+        <span class="p">}</span>
+      <span class="p">})</span>
+      <span class="p">.</span><span class="nx">then</span><span class="p">(</span><span class="nx">res</span> <span class="p">=&gt;</span> <span class="p">{</span>
+        <span class="k">if</span> <span class="p">(</span><span class="nx">res</span><span class="p">.</span><span class="nx">status</span> <span class="o">===</span> <span class="mi">200</span><span class="p">)</span> <span class="p">{</span>
+          <span class="nx">dispatch</span><span class="p">({</span><span class="nx">type</span><span class="o">:</span> <span class="s1">&#39;LOGIN_SUCCESSFUL&#39;</span><span class="p">,</span> <span class="nx">data</span><span class="o">:</span> <span class="nx">res</span><span class="p">.</span><span class="nx">data</span> <span class="p">});</span>
+          <span class="k">return</span> <span class="nx">res</span><span class="p">.</span><span class="nx">data</span><span class="p">;</span>
+        <span class="p">}</span> <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="nx">res</span><span class="p">.</span><span class="nx">status</span> <span class="o">===</span> <span class="mi">403</span> <span class="o">||</span> <span class="nx">res</span><span class="p">.</span><span class="nx">status</span> <span class="o">===</span> <span class="mi">401</span><span class="p">)</span> <span class="p">{</span>
+          <span class="nx">dispatch</span><span class="p">({</span><span class="nx">type</span><span class="o">:</span> <span class="s2">&quot;AUTHENTICATION_ERROR&quot;</span><span class="p">,</span> <span class="nx">data</span><span class="o">:</span> <span class="nx">res</span><span class="p">.</span><span class="nx">data</span><span class="p">});</span>
+          <span class="k">throw</span> <span class="nx">res</span><span class="p">.</span><span class="nx">data</span><span class="p">;</span>
+        <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+          <span class="nx">dispatch</span><span class="p">({</span><span class="nx">type</span><span class="o">:</span> <span class="s2">&quot;LOGIN_FAILED&quot;</span><span class="p">,</span> <span class="nx">data</span><span class="o">:</span> <span class="nx">res</span><span class="p">.</span><span class="nx">data</span><span class="p">});</span>
+          <span class="k">throw</span> <span class="nx">res</span><span class="p">.</span><span class="nx">data</span><span class="p">;</span>
+        <span class="p">}</span>
+      <span class="p">})</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>After this edit <code>frontend/src/components/Login.jsx</code> to make use of the action we created:</p>
+<div class="highlight"><pre><span></span><span class="kn">import</span> <span class="p">{</span><span class="n">Link</span><span class="p">,</span> <span class="n">Redirect</span><span class="p">}</span> <span class="kn">from</span> <span class="s2">&quot;react-router-dom&quot;</span><span class="p">;</span>
+
+<span class="kn">import</span> <span class="p">{</span><span class="n">auth</span><span class="p">}</span> <span class="kn">from</span> <span class="s2">&quot;../actions&quot;</span><span class="p">;</span>
+
+<span class="k">class</span> <span class="nc">Login</span> <span class="n">extends</span> <span class="n">Component</span> <span class="p">{</span>
+
+  <span class="n">onSubmit</span> <span class="o">=</span> <span class="n">e</span> <span class="o">=&gt;</span> <span class="p">{</span>
+    <span class="n">e</span><span class="o">.</span><span class="n">preventDefault</span><span class="p">();</span>
+    <span class="n">this</span><span class="o">.</span><span class="n">props</span><span class="o">.</span><span class="n">login</span><span class="p">(</span><span class="n">this</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">username</span><span class="p">,</span> <span class="n">this</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">password</span><span class="p">);</span>
+  <span class="p">}</span>
+
+  <span class="n">render</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">this</span><span class="o">.</span><span class="n">props</span><span class="o">.</span><span class="n">isAuthenticated</span><span class="p">)</span> <span class="p">{</span>
+      <span class="k">return</span> <span class="o">&lt;</span><span class="n">Redirect</span> <span class="n">to</span><span class="o">=</span><span class="s2">&quot;/&quot;</span> <span class="o">/&gt;</span>
+    <span class="p">}</span>
+    <span class="k">return</span> <span class="p">(</span>
+      <span class="o">&lt;</span><span class="n">form</span> <span class="n">onSubmit</span><span class="o">=</span><span class="p">{</span><span class="n">this</span><span class="o">.</span><span class="n">onSubmit</span><span class="p">}</span><span class="o">&gt;</span>
+        <span class="o">&lt;</span><span class="n">fieldset</span><span class="o">&gt;</span>
+          <span class="o">&lt;</span><span class="n">legend</span><span class="o">&gt;</span><span class="n">Login</span><span class="o">&lt;/</span><span class="n">legend</span><span class="o">&gt;</span>
+          <span class="p">{</span><span class="n">this</span><span class="o">.</span><span class="n">props</span><span class="o">.</span><span class="n">errors</span><span class="o">.</span><span class="n">length</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="o">&amp;&amp;</span> <span class="p">(</span>
+            <span class="o">&lt;</span><span class="n">ul</span><span class="o">&gt;</span>
+              <span class="p">{</span><span class="n">this</span><span class="o">.</span><span class="n">props</span><span class="o">.</span><span class="n">errors</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="n">error</span> <span class="o">=&gt;</span> <span class="p">(</span>
+                <span class="o">&lt;</span><span class="n">li</span> <span class="n">key</span><span class="o">=</span><span class="p">{</span><span class="n">error</span><span class="o">.</span><span class="n">field</span><span class="p">}</span><span class="o">&gt;</span><span class="p">{</span><span class="n">error</span><span class="o">.</span><span class="n">message</span><span class="p">}</span><span class="o">&lt;/</span><span class="n">li</span><span class="o">&gt;</span>
+              <span class="p">))}</span>
+            <span class="o">&lt;/</span><span class="n">ul</span><span class="o">&gt;</span>
+          <span class="p">)}</span>
+          <span class="p">{</span><span class="o">/*</span><span class="n">KEEP</span> <span class="n">THE</span> <span class="n">OTHER</span> <span class="n">ELEMENTS</span><span class="o">*/</span><span class="p">}</span>
+        <span class="o">&lt;/</span><span class="n">fieldset</span><span class="o">&gt;</span>
+      <span class="o">&lt;/</span><span class="n">form</span><span class="o">&gt;</span>
+    <span class="p">)</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="n">const</span> <span class="n">mapStateToProps</span> <span class="o">=</span> <span class="n">state</span> <span class="o">=&gt;</span> <span class="p">{</span>
+  <span class="n">let</span> <span class="n">errors</span> <span class="o">=</span> <span class="p">[];</span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">auth</span><span class="o">.</span><span class="n">errors</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">errors</span> <span class="o">=</span> <span class="n">Object</span><span class="o">.</span><span class="n">keys</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">auth</span><span class="o">.</span><span class="n">errors</span><span class="p">)</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="n">field</span> <span class="o">=&gt;</span> <span class="p">{</span>
+      <span class="k">return</span> <span class="p">{</span><span class="n">field</span><span class="p">,</span> <span class="n">message</span><span class="p">:</span> <span class="n">state</span><span class="o">.</span><span class="n">auth</span><span class="o">.</span><span class="n">errors</span><span class="p">[</span><span class="n">field</span><span class="p">]};</span>
+    <span class="p">});</span>
+  <span class="p">}</span>
+  <span class="k">return</span> <span class="p">{</span>
+    <span class="n">errors</span><span class="p">,</span>
+    <span class="n">isAuthenticated</span><span class="p">:</span> <span class="n">state</span><span class="o">.</span><span class="n">auth</span><span class="o">.</span><span class="n">isAuthenticated</span>
+  <span class="p">};</span>
+<span class="p">}</span>
+
+<span class="n">const</span> <span class="n">mapDispatchToProps</span> <span class="o">=</span> <span class="n">dispatch</span> <span class="o">=&gt;</span> <span class="p">{</span>
+  <span class="k">return</span> <span class="p">{</span>
+    <span class="n">login</span><span class="p">:</span> <span class="p">(</span><span class="n">username</span><span class="p">,</span> <span class="n">password</span><span class="p">)</span> <span class="o">=&gt;</span> <span class="p">{</span>
+      <span class="k">return</span> <span class="n">dispatch</span><span class="p">(</span><span class="n">auth</span><span class="o">.</span><span class="n">login</span><span class="p">(</span><span class="n">username</span><span class="p">,</span> <span class="n">password</span><span class="p">));</span>
+    <span class="p">}</span>
+  <span class="p">};</span>
+<span class="p">}</span>
+
+<span class="n">export</span> <span class="n">default</span> <span class="n">connect</span><span class="p">(</span><span class="n">mapStateToProps</span><span class="p">,</span> <span class="n">mapDispatchToProps</span><span class="p">)(</span><span class="n">Login</span><span class="p">);</span>
+</pre></div>
+
+
+<p>After this you should be able to login from the login page and taken to the notes page if the credentials are correct.</p>
+<h3>Registration page</h3>
+<p>Until now we used the registraton API directly to create users. Since we have all actions and reducers in place, we can create a registration page too.</p>
+<p>Start by creating <code>frontend/src/components/Register.jsx</code> and add the following code:</p>
+<div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">React</span><span class="o">,</span> <span class="p">{</span><span class="n">Component</span><span class="p">}</span> <span class="kn">from</span> <span class="s2">&quot;react&quot;</span><span class="p">;</span>
+<span class="kn">import</span> <span class="p">{</span><span class="n">connect</span><span class="p">}</span> <span class="kn">from</span> <span class="s2">&quot;react-redux&quot;</span><span class="p">;</span>
+
+<span class="kn">import</span> <span class="p">{</span><span class="n">Link</span><span class="p">,</span> <span class="n">Redirect</span><span class="p">}</span> <span class="kn">from</span> <span class="s2">&quot;react-router-dom&quot;</span><span class="p">;</span>
+
+<span class="kn">import</span> <span class="p">{</span><span class="n">auth</span><span class="p">}</span> <span class="kn">from</span> <span class="s2">&quot;../actions&quot;</span><span class="p">;</span>
+
+<span class="k">class</span> <span class="nc">Login</span> <span class="n">extends</span> <span class="n">Component</span> <span class="p">{</span>
+
+  <span class="n">state</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="n">username</span><span class="p">:</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+    <span class="n">password</span><span class="p">:</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+  <span class="p">}</span>
+
+  <span class="n">onSubmit</span> <span class="o">=</span> <span class="n">e</span> <span class="o">=&gt;</span> <span class="p">{</span>
+    <span class="n">e</span><span class="o">.</span><span class="n">preventDefault</span><span class="p">();</span>
+    <span class="n">this</span><span class="o">.</span><span class="n">props</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">this</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">username</span><span class="p">,</span> <span class="n">this</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">password</span><span class="p">);</span>
+  <span class="p">}</span>
+
+  <span class="n">render</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">this</span><span class="o">.</span><span class="n">props</span><span class="o">.</span><span class="n">isAuthenticated</span><span class="p">)</span> <span class="p">{</span>
+      <span class="k">return</span> <span class="o">&lt;</span><span class="n">Redirect</span> <span class="n">to</span><span class="o">=</span><span class="s2">&quot;/&quot;</span> <span class="o">/&gt;</span>
+    <span class="p">}</span>
+    <span class="k">return</span> <span class="p">(</span>
+      <span class="o">&lt;</span><span class="n">form</span> <span class="n">onSubmit</span><span class="o">=</span><span class="p">{</span><span class="n">this</span><span class="o">.</span><span class="n">onSubmit</span><span class="p">}</span><span class="o">&gt;</span>
+        <span class="o">&lt;</span><span class="n">fieldset</span><span class="o">&gt;</span>
+          <span class="o">&lt;</span><span class="n">legend</span><span class="o">&gt;</span><span class="n">Register</span><span class="o">&lt;/</span><span class="n">legend</span><span class="o">&gt;</span>
+          <span class="p">{</span><span class="n">this</span><span class="o">.</span><span class="n">props</span><span class="o">.</span><span class="n">errors</span><span class="o">.</span><span class="n">length</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="o">&amp;&amp;</span> <span class="p">(</span>
+            <span class="o">&lt;</span><span class="n">ul</span><span class="o">&gt;</span>
+              <span class="p">{</span><span class="n">this</span><span class="o">.</span><span class="n">props</span><span class="o">.</span><span class="n">errors</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="n">error</span> <span class="o">=&gt;</span> <span class="p">(</span>
+                <span class="o">&lt;</span><span class="n">li</span> <span class="n">key</span><span class="o">=</span><span class="p">{</span><span class="n">error</span><span class="o">.</span><span class="n">field</span><span class="p">}</span><span class="o">&gt;</span><span class="p">{</span><span class="n">error</span><span class="o">.</span><span class="n">message</span><span class="p">}</span><span class="o">&lt;/</span><span class="n">li</span><span class="o">&gt;</span>
+              <span class="p">))}</span>
+            <span class="o">&lt;/</span><span class="n">ul</span><span class="o">&gt;</span>
+          <span class="p">)}</span>
+          <span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;</span>
+            <span class="o">&lt;</span><span class="n">label</span> <span class="n">htmlFor</span><span class="o">=</span><span class="s2">&quot;username&quot;</span><span class="o">&gt;</span><span class="n">Username</span><span class="o">&lt;/</span><span class="n">label</span><span class="o">&gt;</span>
+            <span class="o">&lt;</span><span class="nb">input</span>
+              <span class="nb">type</span><span class="o">=</span><span class="s2">&quot;text&quot;</span> <span class="nb">id</span><span class="o">=</span><span class="s2">&quot;username&quot;</span>
+              <span class="n">onChange</span><span class="o">=</span><span class="p">{</span><span class="n">e</span> <span class="o">=&gt;</span> <span class="n">this</span><span class="o">.</span><span class="n">setState</span><span class="p">({</span><span class="n">username</span><span class="p">:</span> <span class="n">e</span><span class="o">.</span><span class="n">target</span><span class="o">.</span><span class="n">value</span><span class="p">})}</span> <span class="o">/&gt;</span>
+          <span class="o">&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
+          <span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;</span>
+            <span class="o">&lt;</span><span class="n">label</span> <span class="n">htmlFor</span><span class="o">=</span><span class="s2">&quot;password&quot;</span><span class="o">&gt;</span><span class="n">Password</span><span class="o">&lt;/</span><span class="n">label</span><span class="o">&gt;</span>
+            <span class="o">&lt;</span><span class="nb">input</span>
+              <span class="nb">type</span><span class="o">=</span><span class="s2">&quot;password&quot;</span> <span class="nb">id</span><span class="o">=</span><span class="s2">&quot;password&quot;</span>
+              <span class="n">onChange</span><span class="o">=</span><span class="p">{</span><span class="n">e</span> <span class="o">=&gt;</span> <span class="n">this</span><span class="o">.</span><span class="n">setState</span><span class="p">({</span><span class="n">password</span><span class="p">:</span> <span class="n">e</span><span class="o">.</span><span class="n">target</span><span class="o">.</span><span class="n">value</span><span class="p">})}</span> <span class="o">/&gt;</span>
+          <span class="o">&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
+          <span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;</span>
+            <span class="o">&lt;</span><span class="n">button</span> <span class="nb">type</span><span class="o">=</span><span class="s2">&quot;submit&quot;</span><span class="o">&gt;</span><span class="n">Register</span><span class="o">&lt;/</span><span class="n">button</span><span class="o">&gt;</span>
+          <span class="o">&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
+
+          <span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;</span>
+            <span class="n">Already</span> <span class="n">have</span> <span class="n">an</span> <span class="n">account</span><span class="err">?</span> <span class="o">&lt;</span><span class="n">Link</span> <span class="n">to</span><span class="o">=</span><span class="s2">&quot;/login&quot;</span><span class="o">&gt;</span><span class="n">Login</span><span class="o">&lt;/</span><span class="n">Link</span><span class="o">&gt;</span>
+          <span class="o">&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
+        <span class="o">&lt;/</span><span class="n">fieldset</span><span class="o">&gt;</span>
+      <span class="o">&lt;/</span><span class="n">form</span><span class="o">&gt;</span>
+    <span class="p">)</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="n">const</span> <span class="n">mapStateToProps</span> <span class="o">=</span> <span class="n">state</span> <span class="o">=&gt;</span> <span class="p">{</span>
+  <span class="n">let</span> <span class="n">errors</span> <span class="o">=</span> <span class="p">[];</span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">auth</span><span class="o">.</span><span class="n">errors</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">errors</span> <span class="o">=</span> <span class="n">Object</span><span class="o">.</span><span class="n">keys</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">auth</span><span class="o">.</span><span class="n">errors</span><span class="p">)</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="n">field</span> <span class="o">=&gt;</span> <span class="p">{</span>
+      <span class="k">return</span> <span class="p">{</span><span class="n">field</span><span class="p">,</span> <span class="n">message</span><span class="p">:</span> <span class="n">state</span><span class="o">.</span><span class="n">auth</span><span class="o">.</span><span class="n">errors</span><span class="p">[</span><span class="n">field</span><span class="p">]};</span>
+    <span class="p">});</span>
+  <span class="p">}</span>
+  <span class="k">return</span> <span class="p">{</span>
+    <span class="n">errors</span><span class="p">,</span>
+    <span class="n">isAuthenticated</span><span class="p">:</span> <span class="n">state</span><span class="o">.</span><span class="n">auth</span><span class="o">.</span><span class="n">isAuthenticated</span>
+  <span class="p">};</span>
+<span class="p">}</span>
+
+<span class="n">const</span> <span class="n">mapDispatchToProps</span> <span class="o">=</span> <span class="n">dispatch</span> <span class="o">=&gt;</span> <span class="p">{</span>
+  <span class="k">return</span> <span class="p">{</span>
+    <span class="n">register</span><span class="p">:</span> <span class="p">(</span><span class="n">username</span><span class="p">,</span> <span class="n">password</span><span class="p">)</span> <span class="o">=&gt;</span> <span class="n">dispatch</span><span class="p">(</span><span class="n">auth</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">username</span><span class="p">,</span> <span class="n">password</span><span class="p">)),</span>
+  <span class="p">};</span>
+<span class="p">}</span>
+
+<span class="n">export</span> <span class="n">default</span> <span class="n">connect</span><span class="p">(</span><span class="n">mapStateToProps</span><span class="p">,</span> <span class="n">mapDispatchToProps</span><span class="p">)(</span><span class="n">Login</span><span class="p">);</span>
+</pre></div>
+
+
+<p>As you can see, the component is pretty similar to <code>Login.jsx</code> only noteable difference being the <code>register</code> function/action instead of <code>login</code> and some other text.</p>
+<p>Add a <code>register</code> action to <code>frontend/src/actions/auth.js</code>:</p>
+<div class="highlight"><pre><span></span><span class="kr">export</span> <span class="kr">const</span> <span class="nx">register</span> <span class="o">=</span> <span class="p">(</span><span class="nx">username</span><span class="p">,</span> <span class="nx">password</span><span class="p">)</span> <span class="p">=&gt;</span> <span class="p">{</span>
+  <span class="k">return</span> <span class="p">(</span><span class="nx">dispatch</span><span class="p">,</span> <span class="nx">getState</span><span class="p">)</span> <span class="p">=&gt;</span> <span class="p">{</span>
+    <span class="kd">let</span> <span class="nx">headers</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;Content-Type&quot;</span><span class="o">:</span> <span class="s2">&quot;application/json&quot;</span><span class="p">};</span>
+    <span class="kd">let</span> <span class="nx">body</span> <span class="o">=</span> <span class="nx">JSON</span><span class="p">.</span><span class="nx">stringify</span><span class="p">({</span><span class="nx">username</span><span class="p">,</span> <span class="nx">password</span><span class="p">});</span>
+
+    <span class="k">return</span> <span class="nx">fetch</span><span class="p">(</span><span class="s2">&quot;/api/auth/register/&quot;</span><span class="p">,</span> <span class="p">{</span><span class="nx">headers</span><span class="p">,</span> <span class="nx">body</span><span class="p">,</span> <span class="nx">method</span><span class="o">:</span> <span class="s2">&quot;POST&quot;</span><span class="p">})</span>
+      <span class="p">.</span><span class="nx">then</span><span class="p">(</span><span class="nx">res</span> <span class="p">=&gt;</span> <span class="p">{</span>
+        <span class="k">if</span> <span class="p">(</span><span class="nx">res</span><span class="p">.</span><span class="nx">status</span> <span class="o">&lt;</span> <span class="mi">500</span><span class="p">)</span> <span class="p">{</span>
+          <span class="k">return</span> <span class="nx">res</span><span class="p">.</span><span class="nx">json</span><span class="p">().</span><span class="nx">then</span><span class="p">(</span><span class="nx">data</span> <span class="p">=&gt;</span> <span class="p">{</span>
+            <span class="k">return</span> <span class="p">{</span><span class="nx">status</span><span class="o">:</span> <span class="nx">res</span><span class="p">.</span><span class="nx">status</span><span class="p">,</span> <span class="nx">data</span><span class="p">};</span>
+          <span class="p">})</span>
+        <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+          <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s2">&quot;Server Error!&quot;</span><span class="p">);</span>
+          <span class="k">throw</span> <span class="nx">res</span><span class="p">;</span>
+        <span class="p">}</span>
+      <span class="p">})</span>
+      <span class="p">.</span><span class="nx">then</span><span class="p">(</span><span class="nx">res</span> <span class="p">=&gt;</span> <span class="p">{</span>
+        <span class="k">if</span> <span class="p">(</span><span class="nx">res</span><span class="p">.</span><span class="nx">status</span> <span class="o">===</span> <span class="mi">200</span><span class="p">)</span> <span class="p">{</span>
+          <span class="nx">dispatch</span><span class="p">({</span><span class="nx">type</span><span class="o">:</span> <span class="s1">&#39;REGISTRATION_SUCCESSFUL&#39;</span><span class="p">,</span> <span class="nx">data</span><span class="o">:</span> <span class="nx">res</span><span class="p">.</span><span class="nx">data</span> <span class="p">});</span>
+          <span class="k">return</span> <span class="nx">res</span><span class="p">.</span><span class="nx">data</span><span class="p">;</span>
+        <span class="p">}</span> <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="nx">res</span><span class="p">.</span><span class="nx">status</span> <span class="o">===</span> <span class="mi">403</span> <span class="o">||</span> <span class="nx">res</span><span class="p">.</span><span class="nx">status</span> <span class="o">===</span> <span class="mi">401</span><span class="p">)</span> <span class="p">{</span>
+          <span class="nx">dispatch</span><span class="p">({</span><span class="nx">type</span><span class="o">:</span> <span class="s2">&quot;AUTHENTICATION_ERROR&quot;</span><span class="p">,</span> <span class="nx">data</span><span class="o">:</span> <span class="nx">res</span><span class="p">.</span><span class="nx">data</span><span class="p">});</span>
+          <span class="k">throw</span> <span class="nx">res</span><span class="p">.</span><span class="nx">data</span><span class="p">;</span>
+        <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+          <span class="nx">dispatch</span><span class="p">({</span><span class="nx">type</span><span class="o">:</span> <span class="s2">&quot;REGISTRATION_FAILED&quot;</span><span class="p">,</span> <span class="nx">data</span><span class="o">:</span> <span class="nx">res</span><span class="p">.</span><span class="nx">data</span><span class="p">});</span>
+          <span class="k">throw</span> <span class="nx">res</span><span class="p">.</span><span class="nx">data</span><span class="p">;</span>
+        <span class="p">}</span>
+      <span class="p">})</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>Update auth reducers to handle registration related actions, Update <code>frontend/src/reducers/auth.js</code>:</p>
+<div class="highlight"><pre><span></span><span class="k">case</span> <span class="s1">&#39;LOGIN_SUCCESSFUL&#39;</span><span class="o">:</span>
+<span class="k">case</span> <span class="s1">&#39;REGISTRATION_SUCCESSFUL&#39;</span><span class="o">:</span>
+    <span class="nx">localStorage</span><span class="p">.</span><span class="nx">setItem</span><span class="p">(</span><span class="s2">&quot;token&quot;</span><span class="p">,</span> <span class="nx">action</span><span class="p">.</span><span class="nx">data</span><span class="p">.</span><span class="nx">token</span><span class="p">);</span>
+    <span class="k">return</span> <span class="p">{...</span><span class="nx">state</span><span class="p">,</span> <span class="p">...</span><span class="nx">action</span><span class="p">.</span><span class="nx">data</span><span class="p">,</span> <span class="nx">isAuthenticated</span><span class="o">:</span> <span class="kc">true</span><span class="p">,</span> <span class="nx">isLoading</span><span class="o">:</span> <span class="kc">false</span><span class="p">,</span> <span class="nx">errors</span><span class="o">:</span> <span class="kc">null</span><span class="p">};</span>
+
+<span class="k">case</span> <span class="s1">&#39;AUTHENTICATION_ERROR&#39;</span><span class="o">:</span>
+<span class="k">case</span> <span class="s1">&#39;LOGIN_FAILED&#39;</span><span class="o">:</span>
+<span class="k">case</span> <span class="s1">&#39;REGISTRATION_FAILED&#39;</span><span class="o">:</span>
+<span class="k">case</span> <span class="s1">&#39;LOGOUT_SUCCESSFUL&#39;</span><span class="o">:</span>
+    <span class="nx">localStorage</span><span class="p">.</span><span class="nx">removeItem</span><span class="p">(</span><span class="s2">&quot;token&quot;</span><span class="p">);</span>
+    <span class="k">return</span> <span class="p">{...</span><span class="nx">state</span><span class="p">,</span> <span class="nx">errors</span><span class="o">:</span> <span class="nx">action</span><span class="p">.</span><span class="nx">data</span><span class="p">,</span> <span class="nx">token</span><span class="o">:</span> <span class="kc">null</span><span class="p">,</span> <span class="nx">user</span><span class="o">:</span> <span class="kc">null</span><span class="p">,</span>
+        <span class="nx">isAuthenticated</span><span class="o">:</span> <span class="kc">false</span><span class="p">,</span> <span class="nx">isLoading</span><span class="o">:</span> <span class="kc">false</span><span class="p">};</span>
+</pre></div>
+
+
+<p>Update the cases to include <code>REGISTRATION_SUCCESSFUL</code> and <code>REGISTRATION_FAILED</code> action types.</p>
+<p>Add the <code>Register</code> component in react router route list in <code>App.js</code> inside <code>RootContainerComponent</code>:</p>
+<div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">Register</span> <span class="nn">from</span> <span class="s2">&quot;./components/Register&quot;</span><span class="p">;</span>
+
+<span class="k">class</span> <span class="nc">RootContainerComponent</span> <span class="n">extends</span> <span class="n">Component</span> <span class="p">{</span>
+
+  <span class="n">render</span><span class="p">()</span> <span class="p">{</span>
+    <span class="n">let</span> <span class="p">{</span><span class="n">PrivateRoute</span><span class="p">}</span> <span class="o">=</span> <span class="n">this</span><span class="p">;</span>
+    <span class="k">return</span> <span class="p">(</span>
+      <span class="o">&lt;</span><span class="n">BrowserRouter</span><span class="o">&gt;</span>
+        <span class="o">&lt;</span><span class="n">Switch</span><span class="o">&gt;</span>
+          <span class="o">&lt;</span><span class="n">PrivateRoute</span> <span class="n">exact</span> <span class="n">path</span><span class="o">=</span><span class="s2">&quot;/&quot;</span> <span class="n">component</span><span class="o">=</span><span class="p">{</span><span class="n">PonyNote</span><span class="p">}</span> <span class="o">/&gt;</span>
+          <span class="o">&lt;</span><span class="n">Route</span> <span class="n">exact</span> <span class="n">path</span><span class="o">=</span><span class="s2">&quot;/register&quot;</span> <span class="n">component</span><span class="o">=</span><span class="p">{</span><span class="n">Register</span><span class="p">}</span> <span class="o">/&gt;</span>
+          <span class="o">&lt;</span><span class="n">Route</span> <span class="n">exact</span> <span class="n">path</span><span class="o">=</span><span class="s2">&quot;/login&quot;</span> <span class="n">component</span><span class="o">=</span><span class="p">{</span><span class="n">Login</span><span class="p">}</span> <span class="o">/&gt;</span>
+          <span class="o">&lt;</span><span class="n">Route</span> <span class="n">component</span><span class="o">=</span><span class="p">{</span><span class="n">NotFound</span><span class="p">}</span> <span class="o">/&gt;</span>
+        <span class="o">&lt;/</span><span class="n">Switch</span><span class="o">&gt;</span>
+      <span class="o">&lt;/</span><span class="n">BrowserRouter</span><span class="o">&gt;</span>
+    <span class="p">);</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>Now you'd be able to register by going to <a href="http://localhost:8000/register">localhost:8000/register</a>. You'll also see erros on the page if you try to register using an existing username.</p>
+<h3>Using auth in notes actions</h3>
+<p>While the login page works and the notes page is displayed after login, the core functionality of the notes page is still non-functional. This is because the notes API now requires the user to be logged in to be able to use it.</p>
+<p>Let's update notes actions to fix this issue:</p>
+<p>Update <code>frontend/src/actions/notes.js</code>:</p>
+<div class="highlight"><pre><span></span><span class="kr">export</span> <span class="kr">const</span> <span class="nx">fetchNotes</span> <span class="o">=</span> <span class="p">()</span> <span class="p">=&gt;</span> <span class="p">{</span>
+  <span class="k">return</span> <span class="p">(</span><span class="nx">dispatch</span><span class="p">,</span> <span class="nx">getState</span><span class="p">)</span> <span class="p">=&gt;</span> <span class="p">{</span>
+    <span class="kd">let</span> <span class="nx">headers</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;Content-Type&quot;</span><span class="o">:</span> <span class="s2">&quot;application/json&quot;</span><span class="p">};</span>
+    <span class="kd">let</span> <span class="p">{</span><span class="nx">token</span><span class="p">}</span> <span class="o">=</span> <span class="nx">getState</span><span class="p">().</span><span class="nx">auth</span><span class="p">;</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="nx">token</span><span class="p">)</span> <span class="p">{</span>
+      <span class="nx">headers</span><span class="p">[</span><span class="s2">&quot;Authorization&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="sb">`Token </span><span class="si">${</span><span class="nx">token</span><span class="si">}</span><span class="sb">`</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="k">return</span> <span class="nx">fetch</span><span class="p">(</span><span class="s2">&quot;/api/notes/&quot;</span><span class="p">,</span> <span class="p">{</span><span class="nx">headers</span><span class="p">,</span> <span class="p">})</span>
+      <span class="p">.</span><span class="nx">then</span><span class="p">(</span><span class="nx">res</span> <span class="p">=&gt;</span> <span class="p">{</span>
+        <span class="k">if</span> <span class="p">(</span><span class="nx">res</span><span class="p">.</span><span class="nx">status</span> <span class="o">&lt;</span> <span class="mi">500</span><span class="p">)</span> <span class="p">{</span>
+          <span class="k">return</span> <span class="nx">res</span><span class="p">.</span><span class="nx">json</span><span class="p">().</span><span class="nx">then</span><span class="p">(</span><span class="nx">data</span> <span class="p">=&gt;</span> <span class="p">{</span>
+            <span class="k">return</span> <span class="p">{</span><span class="nx">status</span><span class="o">:</span> <span class="nx">res</span><span class="p">.</span><span class="nx">status</span><span class="p">,</span> <span class="nx">data</span><span class="p">};</span>
+          <span class="p">})</span>
+        <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+          <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s2">&quot;Server Error!&quot;</span><span class="p">);</span>
+          <span class="k">throw</span> <span class="nx">res</span><span class="p">;</span>
+        <span class="p">}</span>
+      <span class="p">})</span>
+      <span class="p">.</span><span class="nx">then</span><span class="p">(</span><span class="nx">res</span> <span class="p">=&gt;</span> <span class="p">{</span>
+        <span class="k">if</span> <span class="p">(</span><span class="nx">res</span><span class="p">.</span><span class="nx">status</span> <span class="o">===</span> <span class="mi">200</span><span class="p">)</span> <span class="p">{</span>
+          <span class="k">return</span> <span class="nx">dispatch</span><span class="p">({</span><span class="nx">type</span><span class="o">:</span> <span class="s1">&#39;FETCH_NOTES&#39;</span><span class="p">,</span> <span class="nx">notes</span><span class="o">:</span> <span class="nx">res</span><span class="p">.</span><span class="nx">data</span><span class="p">});</span>
+        <span class="p">}</span> <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="nx">res</span><span class="p">.</span><span class="nx">status</span> <span class="o">===</span> <span class="mi">401</span> <span class="o">||</span> <span class="nx">res</span><span class="p">.</span><span class="nx">status</span> <span class="o">===</span> <span class="mi">403</span><span class="p">)</span> <span class="p">{</span>
+          <span class="nx">dispatch</span><span class="p">({</span><span class="nx">type</span><span class="o">:</span> <span class="s2">&quot;AUTHENTICATION_ERROR&quot;</span><span class="p">,</span> <span class="nx">data</span><span class="o">:</span> <span class="nx">res</span><span class="p">.</span><span class="nx">data</span><span class="p">});</span>
+          <span class="k">throw</span> <span class="nx">res</span><span class="p">.</span><span class="nx">data</span><span class="p">;</span>
+        <span class="p">}</span>
+      <span class="p">})</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="kr">export</span> <span class="kr">const</span> <span class="nx">addNote</span> <span class="o">=</span> <span class="nx">text</span> <span class="p">=&gt;</span> <span class="p">{</span>
+  <span class="k">return</span> <span class="p">(</span><span class="nx">dispatch</span><span class="p">,</span> <span class="nx">getState</span><span class="p">)</span> <span class="p">=&gt;</span> <span class="p">{</span>
+    <span class="kd">let</span> <span class="nx">headers</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;Content-Type&quot;</span><span class="o">:</span> <span class="s2">&quot;application/json&quot;</span><span class="p">};</span>
+    <span class="kd">let</span> <span class="p">{</span><span class="nx">token</span><span class="p">}</span> <span class="o">=</span> <span class="nx">getState</span><span class="p">().</span><span class="nx">auth</span><span class="p">;</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="nx">token</span><span class="p">)</span> <span class="p">{</span>
+      <span class="nx">headers</span><span class="p">[</span><span class="s2">&quot;Authorization&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="sb">`Token </span><span class="si">${</span><span class="nx">token</span><span class="si">}</span><span class="sb">`</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="kd">let</span> <span class="nx">body</span> <span class="o">=</span> <span class="nx">JSON</span><span class="p">.</span><span class="nx">stringify</span><span class="p">({</span><span class="nx">text</span><span class="p">,</span> <span class="p">});</span>
+    <span class="k">return</span> <span class="nx">fetch</span><span class="p">(</span><span class="s2">&quot;/api/notes/&quot;</span><span class="p">,</span> <span class="p">{</span><span class="nx">headers</span><span class="p">,</span> <span class="nx">method</span><span class="o">:</span> <span class="s2">&quot;POST&quot;</span><span class="p">,</span> <span class="nx">body</span><span class="p">})</span>
+      <span class="p">.</span><span class="nx">then</span><span class="p">(</span><span class="nx">res</span> <span class="p">=&gt;</span> <span class="p">{</span>
+        <span class="k">if</span> <span class="p">(</span><span class="nx">res</span><span class="p">.</span><span class="nx">status</span> <span class="o">&lt;</span> <span class="mi">500</span><span class="p">)</span> <span class="p">{</span>
+          <span class="k">return</span> <span class="nx">res</span><span class="p">.</span><span class="nx">json</span><span class="p">().</span><span class="nx">then</span><span class="p">(</span><span class="nx">data</span> <span class="p">=&gt;</span> <span class="p">{</span>
+            <span class="k">return</span> <span class="p">{</span><span class="nx">status</span><span class="o">:</span> <span class="nx">res</span><span class="p">.</span><span class="nx">status</span><span class="p">,</span> <span class="nx">data</span><span class="p">};</span>
+          <span class="p">})</span>
+        <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+          <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s2">&quot;Server Error!&quot;</span><span class="p">);</span>
+          <span class="k">throw</span> <span class="nx">res</span><span class="p">;</span>
+        <span class="p">}</span>
+      <span class="p">})</span>
+      <span class="p">.</span><span class="nx">then</span><span class="p">(</span><span class="nx">res</span> <span class="p">=&gt;</span> <span class="p">{</span>
+        <span class="k">if</span> <span class="p">(</span><span class="nx">res</span><span class="p">.</span><span class="nx">status</span> <span class="o">===</span> <span class="mi">201</span><span class="p">)</span> <span class="p">{</span>
+          <span class="k">return</span> <span class="nx">dispatch</span><span class="p">({</span><span class="nx">type</span><span class="o">:</span> <span class="s1">&#39;ADD_NOTE&#39;</span><span class="p">,</span> <span class="nx">note</span><span class="o">:</span> <span class="nx">res</span><span class="p">.</span><span class="nx">data</span><span class="p">});</span>
+        <span class="p">}</span> <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="nx">res</span><span class="p">.</span><span class="nx">status</span> <span class="o">===</span> <span class="mi">401</span> <span class="o">||</span> <span class="nx">res</span><span class="p">.</span><span class="nx">status</span> <span class="o">===</span> <span class="mi">403</span><span class="p">)</span> <span class="p">{</span>
+          <span class="nx">dispatch</span><span class="p">({</span><span class="nx">type</span><span class="o">:</span> <span class="s2">&quot;AUTHENTICATION_ERROR&quot;</span><span class="p">,</span> <span class="nx">data</span><span class="o">:</span> <span class="nx">res</span><span class="p">.</span><span class="nx">data</span><span class="p">});</span>
+          <span class="k">throw</span> <span class="nx">res</span><span class="p">.</span><span class="nx">data</span><span class="p">;</span>
+        <span class="p">}</span>
+      <span class="p">})</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="kr">export</span> <span class="kr">const</span> <span class="nx">updateNote</span> <span class="o">=</span> <span class="p">(</span><span class="nx">index</span><span class="p">,</span> <span class="nx">text</span><span class="p">)</span> <span class="p">=&gt;</span> <span class="p">{</span>
+  <span class="k">return</span> <span class="p">(</span><span class="nx">dispatch</span><span class="p">,</span> <span class="nx">getState</span><span class="p">)</span> <span class="p">=&gt;</span> <span class="p">{</span>
+
+    <span class="kd">let</span> <span class="nx">headers</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;Content-Type&quot;</span><span class="o">:</span> <span class="s2">&quot;application/json&quot;</span><span class="p">};</span>
+    <span class="kd">let</span> <span class="p">{</span><span class="nx">token</span><span class="p">}</span> <span class="o">=</span> <span class="nx">getState</span><span class="p">().</span><span class="nx">auth</span><span class="p">;</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="nx">token</span><span class="p">)</span> <span class="p">{</span>
+      <span class="nx">headers</span><span class="p">[</span><span class="s2">&quot;Authorization&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="sb">`Token </span><span class="si">${</span><span class="nx">token</span><span class="si">}</span><span class="sb">`</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="kd">let</span> <span class="nx">body</span> <span class="o">=</span> <span class="nx">JSON</span><span class="p">.</span><span class="nx">stringify</span><span class="p">({</span><span class="nx">text</span><span class="p">,</span> <span class="p">});</span>
+    <span class="kd">let</span> <span class="nx">noteId</span> <span class="o">=</span> <span class="nx">getState</span><span class="p">().</span><span class="nx">notes</span><span class="p">[</span><span class="nx">index</span><span class="p">].</span><span class="nx">id</span><span class="p">;</span>
+
+    <span class="k">return</span> <span class="nx">fetch</span><span class="p">(</span><span class="sb">`/api/notes/</span><span class="si">${</span><span class="nx">noteId</span><span class="si">}</span><span class="sb">/`</span><span class="p">,</span> <span class="p">{</span><span class="nx">headers</span><span class="p">,</span> <span class="nx">method</span><span class="o">:</span> <span class="s2">&quot;PUT&quot;</span><span class="p">,</span> <span class="nx">body</span><span class="p">})</span>
+      <span class="p">.</span><span class="nx">then</span><span class="p">(</span><span class="nx">res</span> <span class="p">=&gt;</span> <span class="p">{</span>
+        <span class="k">if</span> <span class="p">(</span><span class="nx">res</span><span class="p">.</span><span class="nx">status</span> <span class="o">&lt;</span> <span class="mi">500</span><span class="p">)</span> <span class="p">{</span>
+          <span class="k">return</span> <span class="nx">res</span><span class="p">.</span><span class="nx">json</span><span class="p">().</span><span class="nx">then</span><span class="p">(</span><span class="nx">data</span> <span class="p">=&gt;</span> <span class="p">{</span>
+            <span class="k">return</span> <span class="p">{</span><span class="nx">status</span><span class="o">:</span> <span class="nx">res</span><span class="p">.</span><span class="nx">status</span><span class="p">,</span> <span class="nx">data</span><span class="p">};</span>
+          <span class="p">})</span>
+        <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+          <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s2">&quot;Server Error!&quot;</span><span class="p">);</span>
+          <span class="k">throw</span> <span class="nx">res</span><span class="p">;</span>
+        <span class="p">}</span>
+      <span class="p">})</span>
+      <span class="p">.</span><span class="nx">then</span><span class="p">(</span><span class="nx">res</span> <span class="p">=&gt;</span> <span class="p">{</span>
+        <span class="k">if</span> <span class="p">(</span><span class="nx">res</span><span class="p">.</span><span class="nx">status</span> <span class="o">===</span> <span class="mi">200</span><span class="p">)</span> <span class="p">{</span>
+          <span class="k">return</span> <span class="nx">dispatch</span><span class="p">({</span><span class="nx">type</span><span class="o">:</span> <span class="s1">&#39;UPDATE_NOTE&#39;</span><span class="p">,</span> <span class="nx">note</span><span class="o">:</span> <span class="nx">res</span><span class="p">.</span><span class="nx">data</span><span class="p">,</span> <span class="nx">index</span><span class="p">});</span>
+        <span class="p">}</span> <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="nx">res</span><span class="p">.</span><span class="nx">status</span> <span class="o">===</span> <span class="mi">401</span> <span class="o">||</span> <span class="nx">res</span><span class="p">.</span><span class="nx">status</span> <span class="o">===</span> <span class="mi">403</span><span class="p">)</span> <span class="p">{</span>
+          <span class="nx">dispatch</span><span class="p">({</span><span class="nx">type</span><span class="o">:</span> <span class="s2">&quot;AUTHENTICATION_ERROR&quot;</span><span class="p">,</span> <span class="nx">data</span><span class="o">:</span> <span class="nx">res</span><span class="p">.</span><span class="nx">data</span><span class="p">});</span>
+          <span class="k">throw</span> <span class="nx">res</span><span class="p">.</span><span class="nx">data</span><span class="p">;</span>
+        <span class="p">}</span>
+      <span class="p">})</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="kr">export</span> <span class="kr">const</span> <span class="nx">deleteNote</span> <span class="o">=</span> <span class="nx">index</span> <span class="p">=&gt;</span> <span class="p">{</span>
+  <span class="k">return</span> <span class="p">(</span><span class="nx">dispatch</span><span class="p">,</span> <span class="nx">getState</span><span class="p">)</span> <span class="p">=&gt;</span> <span class="p">{</span>
+
+    <span class="kd">let</span> <span class="nx">headers</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;Content-Type&quot;</span><span class="o">:</span> <span class="s2">&quot;application/json&quot;</span><span class="p">};</span>
+    <span class="kd">let</span> <span class="p">{</span><span class="nx">token</span><span class="p">}</span> <span class="o">=</span> <span class="nx">getState</span><span class="p">().</span><span class="nx">auth</span><span class="p">;</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="nx">token</span><span class="p">)</span> <span class="p">{</span>
+      <span class="nx">headers</span><span class="p">[</span><span class="s2">&quot;Authorization&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="sb">`Token </span><span class="si">${</span><span class="nx">token</span><span class="si">}</span><span class="sb">`</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="kd">let</span> <span class="nx">noteId</span> <span class="o">=</span> <span class="nx">getState</span><span class="p">().</span><span class="nx">notes</span><span class="p">[</span><span class="nx">index</span><span class="p">].</span><span class="nx">id</span><span class="p">;</span>
+
+    <span class="k">return</span> <span class="nx">fetch</span><span class="p">(</span><span class="sb">`/api/notes/</span><span class="si">${</span><span class="nx">noteId</span><span class="si">}</span><span class="sb">/`</span><span class="p">,</span> <span class="p">{</span><span class="nx">headers</span><span class="p">,</span> <span class="nx">method</span><span class="o">:</span> <span class="s2">&quot;DELETE&quot;</span><span class="p">})</span>
+      <span class="p">.</span><span class="nx">then</span><span class="p">(</span><span class="nx">res</span> <span class="p">=&gt;</span> <span class="p">{</span>
+        <span class="k">if</span> <span class="p">(</span><span class="nx">res</span><span class="p">.</span><span class="nx">status</span> <span class="o">===</span> <span class="mi">204</span><span class="p">)</span> <span class="p">{</span>
+          <span class="k">return</span> <span class="p">{</span><span class="nx">status</span><span class="o">:</span> <span class="nx">res</span><span class="p">.</span><span class="nx">status</span><span class="p">,</span> <span class="nx">data</span><span class="o">:</span> <span class="p">{}};</span>
+        <span class="p">}</span> <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="nx">res</span><span class="p">.</span><span class="nx">status</span> <span class="o">&lt;</span> <span class="mi">500</span><span class="p">)</span> <span class="p">{</span>
+          <span class="k">return</span> <span class="nx">res</span><span class="p">.</span><span class="nx">json</span><span class="p">().</span><span class="nx">then</span><span class="p">(</span><span class="nx">data</span> <span class="p">=&gt;</span> <span class="p">{</span>
+            <span class="k">return</span> <span class="p">{</span><span class="nx">status</span><span class="o">:</span> <span class="nx">res</span><span class="p">.</span><span class="nx">status</span><span class="p">,</span> <span class="nx">data</span><span class="p">};</span>
+          <span class="p">})</span>
+        <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+          <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s2">&quot;Server Error!&quot;</span><span class="p">);</span>
+          <span class="k">throw</span> <span class="nx">res</span><span class="p">;</span>
+        <span class="p">}</span>
+      <span class="p">})</span>
+      <span class="p">.</span><span class="nx">then</span><span class="p">(</span><span class="nx">res</span> <span class="p">=&gt;</span> <span class="p">{</span>
+        <span class="k">if</span> <span class="p">(</span><span class="nx">res</span><span class="p">.</span><span class="nx">status</span> <span class="o">===</span> <span class="mi">204</span><span class="p">)</span> <span class="p">{</span>
+          <span class="k">return</span> <span class="nx">dispatch</span><span class="p">({</span><span class="nx">type</span><span class="o">:</span> <span class="s1">&#39;DELETE_NOTE&#39;</span><span class="p">,</span> <span class="nx">index</span><span class="p">});</span>
+        <span class="p">}</span> <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="nx">res</span><span class="p">.</span><span class="nx">status</span> <span class="o">===</span> <span class="mi">401</span> <span class="o">||</span> <span class="nx">res</span><span class="p">.</span><span class="nx">status</span> <span class="o">===</span> <span class="mi">403</span><span class="p">)</span> <span class="p">{</span>
+          <span class="nx">dispatch</span><span class="p">({</span><span class="nx">type</span><span class="o">:</span> <span class="s2">&quot;AUTHENTICATION_ERROR&quot;</span><span class="p">,</span> <span class="nx">data</span><span class="o">:</span> <span class="nx">res</span><span class="p">.</span><span class="nx">data</span><span class="p">});</span>
+          <span class="k">throw</span> <span class="nx">res</span><span class="p">.</span><span class="nx">data</span><span class="p">;</span>
+        <span class="p">}</span>
+      <span class="p">})</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>The above code makes sure that authorization token is sent with all note related API calls, relevant actions are dispatched depending upon the type of response we receive.</p>
+<p>After this you should be able to manage notes as a user.</p>
+<h3>Logout feature</h3>
+<p>Now that the application is functional, it is about time we added a basic yet essential feature. To add logout functionality, start by adding a <code>logout</code> action function in <code>frontend/src/actions/auth.js</code>:</p>
+<div class="highlight"><pre><span></span><span class="kr">export</span> <span class="kr">const</span> <span class="nx">logout</span> <span class="o">=</span> <span class="p">()</span> <span class="p">=&gt;</span> <span class="p">{</span>
+  <span class="k">return</span> <span class="p">(</span><span class="nx">dispatch</span><span class="p">,</span> <span class="nx">getState</span><span class="p">)</span> <span class="p">=&gt;</span> <span class="p">{</span>
+    <span class="kd">let</span> <span class="nx">headers</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;Content-Type&quot;</span><span class="o">:</span> <span class="s2">&quot;application/json&quot;</span><span class="p">};</span>
+
+    <span class="k">return</span> <span class="nx">fetch</span><span class="p">(</span><span class="s2">&quot;/api/auth/logout/&quot;</span><span class="p">,</span> <span class="p">{</span><span class="nx">headers</span><span class="p">,</span> <span class="nx">body</span><span class="o">:</span> <span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="nx">method</span><span class="o">:</span> <span class="s2">&quot;POST&quot;</span><span class="p">})</span>
+      <span class="p">.</span><span class="nx">then</span><span class="p">(</span><span class="nx">res</span> <span class="p">=&gt;</span> <span class="p">{</span>
+        <span class="k">if</span> <span class="p">(</span><span class="nx">res</span><span class="p">.</span><span class="nx">status</span> <span class="o">===</span> <span class="mi">204</span><span class="p">)</span> <span class="p">{</span>
+          <span class="k">return</span> <span class="p">{</span><span class="nx">status</span><span class="o">:</span> <span class="nx">res</span><span class="p">.</span><span class="nx">status</span><span class="p">,</span> <span class="nx">data</span><span class="o">:</span> <span class="p">{}};</span>
+        <span class="p">}</span> <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="nx">res</span><span class="p">.</span><span class="nx">status</span> <span class="o">&lt;</span> <span class="mi">500</span><span class="p">)</span> <span class="p">{</span>
+          <span class="k">return</span> <span class="nx">res</span><span class="p">.</span><span class="nx">json</span><span class="p">().</span><span class="nx">then</span><span class="p">(</span><span class="nx">data</span> <span class="p">=&gt;</span> <span class="p">{</span>
+            <span class="k">return</span> <span class="p">{</span><span class="nx">status</span><span class="o">:</span> <span class="nx">res</span><span class="p">.</span><span class="nx">status</span><span class="p">,</span> <span class="nx">data</span><span class="p">};</span>
+          <span class="p">})</span>
+        <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+          <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s2">&quot;Server Error!&quot;</span><span class="p">);</span>
+          <span class="k">throw</span> <span class="nx">res</span><span class="p">;</span>
+        <span class="p">}</span>
+      <span class="p">})</span>
+      <span class="p">.</span><span class="nx">then</span><span class="p">(</span><span class="nx">res</span> <span class="p">=&gt;</span> <span class="p">{</span>
+        <span class="k">if</span> <span class="p">(</span><span class="nx">res</span><span class="p">.</span><span class="nx">status</span> <span class="o">===</span> <span class="mi">204</span><span class="p">)</span> <span class="p">{</span>
+          <span class="nx">dispatch</span><span class="p">({</span><span class="nx">type</span><span class="o">:</span> <span class="s1">&#39;LOGOUT_SUCCESSFUL&#39;</span><span class="p">});</span>
+          <span class="k">return</span> <span class="nx">res</span><span class="p">.</span><span class="nx">data</span><span class="p">;</span>
+        <span class="p">}</span> <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="nx">res</span><span class="p">.</span><span class="nx">status</span> <span class="o">===</span> <span class="mi">403</span> <span class="o">||</span> <span class="nx">res</span><span class="p">.</span><span class="nx">status</span> <span class="o">===</span> <span class="mi">401</span><span class="p">)</span> <span class="p">{</span>
+          <span class="nx">dispatch</span><span class="p">({</span><span class="nx">type</span><span class="o">:</span> <span class="s2">&quot;AUTHENTICATION_ERROR&quot;</span><span class="p">,</span> <span class="nx">data</span><span class="o">:</span> <span class="nx">res</span><span class="p">.</span><span class="nx">data</span><span class="p">});</span>
+          <span class="k">throw</span> <span class="nx">res</span><span class="p">.</span><span class="nx">data</span><span class="p">;</span>
+        <span class="p">}</span>
+      <span class="p">})</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>Now, let's use this action in <code>PonyNote</code> component to show a logout link. Update <code>frontend/src/components/PonyNote.jsx</code>:</p>
+<div class="highlight"><pre><span></span><span class="kn">import</span> <span class="p">{</span><span class="n">notes</span><span class="p">,</span> <span class="n">auth</span><span class="p">}</span> <span class="kn">from</span> <span class="s2">&quot;../actions&quot;</span><span class="p">;</span>
+
+<span class="k">class</span> <span class="nc">PonyNote</span> <span class="n">extends</span> <span class="n">Component</span> <span class="p">{</span>
+
+  <span class="n">render</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="p">(</span>
+      <span class="o">&lt;</span><span class="n">div</span><span class="o">&gt;</span>
+        <span class="o">&lt;</span><span class="n">h2</span><span class="o">&gt;</span><span class="n">Welcome</span> <span class="n">to</span> <span class="n">PonyNote</span><span class="err">!</span><span class="o">&lt;/</span><span class="n">h2</span><span class="o">&gt;</span>
+        <span class="o">&lt;</span><span class="n">hr</span> <span class="o">/&gt;</span>
+        <span class="o">&lt;</span><span class="n">div</span> <span class="n">style</span><span class="o">=</span><span class="p">{{</span><span class="n">textAlign</span><span class="p">:</span> <span class="s2">&quot;right&quot;</span><span class="p">}}</span><span class="o">&gt;</span>
+          <span class="p">{</span><span class="n">this</span><span class="o">.</span><span class="n">props</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">username</span><span class="p">}</span> <span class="p">(</span><span class="o">&lt;</span><span class="n">a</span> <span class="n">onClick</span><span class="o">=</span><span class="p">{</span><span class="n">this</span><span class="o">.</span><span class="n">props</span><span class="o">.</span><span class="n">logout</span><span class="p">}</span><span class="o">&gt;</span><span class="n">logout</span><span class="o">&lt;/</span><span class="n">a</span><span class="o">&gt;</span><span class="p">)</span>
+        <span class="o">&lt;/</span><span class="n">div</span><span class="o">&gt;</span>
+
+        <span class="p">{</span><span class="o">*/</span><span class="n">KEEP</span> <span class="n">OTHER</span> <span class="n">ELEMENTS</span><span class="o">*/</span><span class="p">}</span>
+
+      <span class="o">&lt;/</span><span class="n">div</span><span class="o">&gt;</span>
+    <span class="p">)</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+
+
+<span class="n">const</span> <span class="n">mapStateToProps</span> <span class="o">=</span> <span class="n">state</span> <span class="o">=&gt;</span> <span class="p">{</span>
+  <span class="k">return</span> <span class="p">{</span>
+    <span class="n">notes</span><span class="p">:</span> <span class="n">state</span><span class="o">.</span><span class="n">notes</span><span class="p">,</span>
+    <span class="n">user</span><span class="p">:</span> <span class="n">state</span><span class="o">.</span><span class="n">auth</span><span class="o">.</span><span class="n">user</span><span class="p">,</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="n">const</span> <span class="n">mapDispatchToProps</span> <span class="o">=</span> <span class="n">dispatch</span> <span class="o">=&gt;</span> <span class="p">{</span>
+  <span class="k">return</span> <span class="p">{</span>
+    <span class="n">fetchNotes</span><span class="p">:</span> <span class="p">()</span> <span class="o">=&gt;</span> <span class="p">{</span>
+      <span class="n">dispatch</span><span class="p">(</span><span class="n">notes</span><span class="o">.</span><span class="n">fetchNotes</span><span class="p">());</span>
+    <span class="p">},</span>
+    <span class="n">addNote</span><span class="p">:</span> <span class="p">(</span><span class="n">text</span><span class="p">)</span> <span class="o">=&gt;</span> <span class="p">{</span>
+      <span class="k">return</span> <span class="n">dispatch</span><span class="p">(</span><span class="n">notes</span><span class="o">.</span><span class="n">addNote</span><span class="p">(</span><span class="n">text</span><span class="p">));</span>
+    <span class="p">},</span>
+    <span class="n">updateNote</span><span class="p">:</span> <span class="p">(</span><span class="nb">id</span><span class="p">,</span> <span class="n">text</span><span class="p">)</span> <span class="o">=&gt;</span> <span class="p">{</span>
+      <span class="k">return</span> <span class="n">dispatch</span><span class="p">(</span><span class="n">notes</span><span class="o">.</span><span class="n">updateNote</span><span class="p">(</span><span class="nb">id</span><span class="p">,</span> <span class="n">text</span><span class="p">));</span>
+    <span class="p">},</span>
+    <span class="n">deleteNote</span><span class="p">:</span> <span class="p">(</span><span class="nb">id</span><span class="p">)</span> <span class="o">=&gt;</span> <span class="p">{</span>
+      <span class="n">dispatch</span><span class="p">(</span><span class="n">notes</span><span class="o">.</span><span class="n">deleteNote</span><span class="p">(</span><span class="nb">id</span><span class="p">));</span>
+    <span class="p">},</span>
+    <span class="n">logout</span><span class="p">:</span> <span class="p">()</span> <span class="o">=&gt;</span> <span class="n">dispatch</span><span class="p">(</span><span class="n">auth</span><span class="o">.</span><span class="n">logout</span><span class="p">()),</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>This will display the username of logged in user along with a logout link. Our application will look something like this at this point:</p>
+<p><img alt="final page" src="http://v1k45.com/images/modern-django-4-final.png"></p>
+<h3>Summary</h3>
+<p>Now you'll be able to create, read, update and delete notes privately using user accounts. The notes pages will ebe protected by a login page and anyone would be able to register and start managing their notes.</p>
+<p>I'm not sure what should I post for the next part. I am thinking of either server-side rendering (SSR) of the react application or deployment procedure of the application as a final post.</p>
+<h3>Reference</h3>
+<ul>
+<li><a href="http://www.django-rest-framework.org/">Django Rest Framework</a></li>
+<li><a href="https://github.com/James1345/django-rest-knox/">Django Rest Knox</a></li>
+</ul>
+    </div>
+    <footer>
+    <hr/>
+      Posted in: <a href="http://v1k45.com/blog/categories/web-development/">Web Development</a>
+      <br />
+      Tags:
+          <a href="http://v1k45.com/blog/tags/python/">python</a>,           <a href="http://v1k45.com/blog/tags/django/">django</a>,           <a href="http://v1k45.com/blog/tags/javascript/">javascript</a>,           <a href="http://v1k45.com/blog/tags/js/">js</a>,           <a href="http://v1k45.com/blog/tags/react/">react</a>,           <a href="http://v1k45.com/blog/tags/django-rest-framework/">django-rest-framework</a>,           <a href="http://v1k45.com/blog/tags/django-rest-knox/">django-rest-knox</a><div id="disqus_thread"></div>
+<script>
+  var disqus_config = function () {
+    this.page.url = "http://v1k45.com/blog/modern-django-part-4-adding-authentication-to-react-spa-using-drf/";
+    this.page.identifier = "modern-django-part-4-adding-authentication-to-react-spa-using-drf";
+  };
+  (function() { // DON'T EDIT BELOW THIS LINE
+  var d = document, s = d.createElement('script');
+    s.src = 'https://v1k45.disqus.com/embed.js';
+  s.setAttribute('data-timestamp', +new Date());
+  (d.head || d.body).appendChild(s);
+  })();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>    </footer>
+  </section>
+		</main>
+
+		<!-- Global site tag (gtag.js) - Google Analytics -->
+		<script async src="https://www.googletagmanager.com/gtag/js?id=UA-114981561-1"></script>
+		<script>
+		  window.dataLayer = window.dataLayer || [];
+		  function gtag(){dataLayer.push(arguments);}
+		  gtag('js', new Date());
+
+		  gtag('config', 'UA-114981561-1');
+		</script>
+
+	<script id="dsq-count-scr" src="//v1k45.disqus.com/count.js" async></script>
+	</body>
+</html>
