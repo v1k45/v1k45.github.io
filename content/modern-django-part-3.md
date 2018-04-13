@@ -390,7 +390,7 @@ case 'DELETE_NOTE':
 
 Now you'll be able to create, read, update and delete notes using the API built using django-rest-framework. All the notes are stored in redux store in client side and changes will be reflected in the database and persist on reload.
 
-In [next part]({filename}/modern-django-part-3.md) we'll add authentication to pony note so that multiple users can maintain their notes privately. We'll implement login/signup flow and assosiate notes with users.
+In [next part]({filename}/modern-django-part-4.md) we'll add authentication to pony note so that multiple users can maintain their notes privately. We'll implement login/signup flow and assosiate notes with users.
 
 ### Reference
 
