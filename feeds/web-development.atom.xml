@@ -1381,7 +1381,7 @@ Running migrations:
 
 &lt;h3&gt;Summary&lt;/h3&gt;
 &lt;p&gt;Now you'll be able to create, read, update and delete notes using the API built using django-rest-framework. All the notes are stored in redux store in client side and changes will be reflected in the database and persist on reload.&lt;/p&gt;
-&lt;p&gt;In &lt;a href="http://v1k45.com/blog/modern-django-part-3-creating-an-api-and-integrating-with-react/"&gt;next part&lt;/a&gt; we'll add authentication to pony note so that multiple users can maintain their notes privately. We'll implement login/signup flow and assosiate notes with users.&lt;/p&gt;
+&lt;p&gt;In &lt;a href="http://v1k45.com/blog/modern-django-part-4-adding-authentication-to-react-spa-using-drf/"&gt;next part&lt;/a&gt; we'll add authentication to pony note so that multiple users can maintain their notes privately. We'll implement login/signup flow and assosiate notes with users.&lt;/p&gt;
 &lt;h3&gt;Reference&lt;/h3&gt;
 &lt;ul&gt;
 &lt;li&gt;&lt;a href="http://www.django-rest-framework.org/"&gt;Django Rest Framework&lt;/a&gt;&lt;/li&gt;
