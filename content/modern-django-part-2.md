@@ -6,15 +6,15 @@ Tags: javascript, js, react, redux, react-router
 
 This is the second part of the tutorial series on how to create a "Modern" web application or SPA using Django and React.js
 
-In this part, we'll setup redux and react router in our note taking application. And later connect this frontend to a API backend.
+In this part, we'll setup redux and react router in our note taking application. And later connect this frontend to an API backend.
 
-The code for this repository is hosted on my github, [v1k45/ponynote](https://github.com/v1k45/ponynote). You can checkout `part-2` branch to all the changes done till the end of this part.
+The code for this repository is hosted on my github, [v1k45/ponynote](https://github.com/v1k45/ponynote). You can checkout `part-2` branch to see all the changes done till the end of this part.
 
 ### What is react router?
 
 [React-router-dom](https://reacttraining.com/react-router/web) is a library which is used for in-application routing in react applications. Using it you can mount components on urls of your choice.
 
-We'll first create router for our application with relevant routes. Since this is a basic note-taking application, just one component/route should suffice but we'll still create few other components and routes for demonstration.
+We'll first create a router for our application with relevant routes. Since this is a basic note-taking application, just one component/route should suffice but we'll still create a few other components and routes for demonstration.
 
 #### Setup react-router-dom
 
@@ -25,7 +25,7 @@ $ cd ponynote/frontend
 $ npm install --save react-router-dom
 ```
 
-After this let us create few components which we will be using in the application. To maintain a clean directory structure we'll create all components inside components directory. We will create a `PonyNote` component for our main app and `NotFound` component for 404 pages.
+After this let us create a few components which we will be using in the application. To maintain a clean directory structure we'll create all components inside a components directory. We will create a `PonyNote` component for our main app and `NotFound` component for 404 pages.
 
 ```
 $ cd src/
@@ -59,7 +59,7 @@ class App extends Component {
 export default App;
 ```
 
-The above code will make use of [`BrowserRouter`](https://reacttraining.com/react-router/web/api/BrowserRouter), which means it will use the HTML5 history API to maintain the application routing. The [`Switch`](https://reacttraining.com/react-router/web/api/Switch) component is optional, but it is used for efficient routing. The [`Route`](https://reacttraining.com/react-router/web/api/Route) components renders the target component when the location of the application matches it's path. If no path is specified to the `Route`, all path matches return true, which is useful for 404 pages.
+The above code will make use of [`BrowserRouter`](https://reacttraining.com/react-router/web/api/BrowserRouter), which means it will use the HTML5 history API to maintain the application routing. The [`Switch`](https://reacttraining.com/react-router/web/api/Switch) component is optional, but it is used for efficient routing. The [`Route`](https://reacttraining.com/react-router/web/api/Route) components render the target component when the location of the application matches it's path. If no path is specified to the `Route`, all path matches return true, which is useful for 404 pages.
 
 Now that our component is ready, we can update our components to show actual content.
 
@@ -104,7 +104,7 @@ const NotFound = () => {
 export default NotFound
 ```
 
-After this, start django development server and webpack hotloader:
+After this, start the django development server and webpack hotloader:
 
 ```
 (ponynote) $ ./manage.py runserver
@@ -115,15 +115,15 @@ You should see the following page in your browser:
 
 ![React router example welcome page]({filename}/images/modern-django-2-rrd-welcome.png)
 
-And when clicked on the contact link, you should get the 404 page:
+And when you click on the contact link, you should get the 404 page:
 
 ![React router example 404 page]({filename}/images/modern-django-2-rrd-404.png)
 
-And you'll be able to browse back to previous page using the "Back" button in your browser.
+And you'll be able to browse back to the previous page using the "Back" button in your browser.
 
 ### What is Redux?
 
-[Redux](https://redux.js.org/) is a global application state management library based on [Flux](http://facebook.github.io/flux/) architecture of unidirectional data flow.
+[Redux](https://redux.js.org/) is a global application state management library based on [Flux](http://facebook.github.io/flux/) architecture and unidirectional data flow.
 
 There are three major components in redux: [actions](https://redux.js.org/basics/actions), [reducers](https://redux.js.org/basics/reducers) and [store](https://redux.js.org/basics/store).
 
@@ -150,7 +150,7 @@ After installation, create directories for actions and reducers:
 $ mkdir actions reducers
 ```
 
-Create empty action and reducers files:
+Create empty action and reducer files:
 
 ```
 $ touch actions/index.js reducers/index.js
@@ -173,13 +173,13 @@ export default function notes(state=initialState, action) {
 }
 ```
 
-The `initialState` is the initial application state for notes (duh!). The `notes` function is a reducer, it takes state and action as argument. We have defined one note for now.
+The `initialState` is the initial application state for notes (duh!). The `notes` function is a reducer, it takes state and action as arguments. We have defined one note for now.
 
 Note that the `initialState` can be any valid javascript type. For our use case we are directly using Array but most commonly the state is defined as a Javascript object.
 
-A common way of creating a reducers is to have a switch statement which handles all types of actions using case label. For now, lets return the current application state as default with no cases.
+A common way of creating reducers is to have a switch statement which handles all types of actions using case label. For now, lets return the current application state as default with no cases.
 
-After this reducer is created we need to use in our application using redux store. For this, first edit `reducers/index.js`:
+After this reducer is created we need to use it in our application using redux store. For this, first edit `reducers/index.js`:
 
 ```jsx
 import { combineReducers } from 'redux';
@@ -193,7 +193,7 @@ const ponyApp = combineReducers({
 export default ponyApp;
 ```
 
-Using the above code we can combine multiple reducers into one. We don't need this in our application but for real world applications with lots of reducers, this comes handy.
+Using the above code we can combine multiple reducers into one. We don't need this in our application but for real world applications with lots of reducers, this comes in handy.
 
 Now we need to create a redux store using this reducer. In `App.js` create a store:
 
@@ -286,7 +286,7 @@ const mapDispatchToProps = dispatch => {
 export default connect(mapStateToProps, mapDispatchToProps)(PonyNote);
 ```
 
-In the above code we "connect" our component using the `connect` high order function provided by `react-redux`. `mapStateToProps` is used to "map" the application state to the "props" of the component. Here, we are passing the notes array as a component prop with same name. `mapDispatchToProps` is "map" action dispatcher functions to component "props".
+In the above code we "connect" our component using the `connect` high order function provided by `react-redux`. `mapStateToProps` is used to "map" the application state to the "props" of the component. Here, we are passing the notes array as a component prop with same name. `mapDispatchToProps` is "mapping" action dispatcher functions to component "props".
 
 Inside the render function we have created a table and iterated all notes with placeholder edit and delete button. The above code should result in a webpage like this:
 
@@ -298,7 +298,7 @@ Now that we have a read-only implementation of our note-taking app which just di
 
 ##### Defining actions and reducers
 
-In `reducers/notes.js`, add cases to add, update and delete notes inside the switch statement.
+In `reducers/notes.js`, write cases to add, update and delete notes inside the switch statement.
 
 ```js
 export default function notes(state=initialState, action) {
@@ -325,9 +325,9 @@ export default function notes(state=initialState, action) {
 }
 ```
 
-In above code we are handling different cases of action payload, namely `ADD_NOTE`, `UPDATE_NOTE` and `UPDATE_NOTE`. This individual cases do what their name suggest and return a modified copy of the state after the said action is done. Here we do not update the state directly, but we return a new state which will replace the current state of the notes reducer.
+In the above code we are handling different cases of action payload, namely `ADD_NOTE`, `UPDATE_NOTE` and `UPDATE_NOTE`. The individual cases do what their name suggest and return a modified copy of the state after the said action is done. Here we do not update the state directly, but we return a new state which will replace the current state of the notes reducer.
 
-These cases in the reducers will be only invoked when an action is dispatched of respective type. In `actions/notes.js` declare the actions:
+The cases in the reducers will only be invoked when an action is dispatched of corresponding type. In `actions/notes.js` declare the actions:
 
 ```js
 export const addNote = text => {
@@ -353,7 +353,7 @@ export const deleteNote = id => {
 }
 ```
 
-Each of above function returns an object with `type` property using which the reducer determines *how* the state is to be updated. Besides `type` these payloads can have any property as values which can later be used inside the reducer function while modifying the state.
+Each of the above functions returns an object with a `type` property which the reducer uses to determine *how* the state is to be updated. Besides `type` these payloads can have any property as values which can later be used inside the reducer function while modifying the state.
 
 Update the `actions/index.js` file so that we can access all actions in one place:
 
@@ -365,9 +365,9 @@ export {notes}
 
 ##### Using Actions inside a component
 
-After the actions are defined, we can use them inside the `PonyNote` component by declaring properties in `mapDispatchToProps` function.
+After the actions are defined, we can use them inside the `PonyNote` component by declaring properties in `mapDispatchToProps`.
 
-Update the `mapDispatchToProps` function to use all actions:
+Update `mapDispatchToProps` function to use all actions:
 
 ```js
 import {notes} from "../actions";
@@ -387,7 +387,7 @@ const mapDispatchToProps = dispatch => {
 }
 ```
 
-Now all these dispatch actions are accessible in side a component using `this.props`.
+Now all these dispatch actions are accessible inside a component using `this.props`.
 
 ##### Building UI elements to dispatch actions
 
@@ -406,7 +406,7 @@ submitNote = (e) => {
 
 ```
 
-Inside the body of the component put the HTML form to enter text and save the note:
+Inside the body of the component add the HTML form to enter text and save the note:
 
 ```
 <h3>Add new note</h3>
@@ -422,7 +422,7 @@ Inside the body of the component put the HTML form to enter text and save the no
 
 The above code will store the note text in the component state and save it when the form is submitted. `onSubmit`, the application will dispatch an action `ADD_NOTE` which will then add the note to redux state.
 
-Similarly we can add option to delete notes when the "delete" button is pressed. Replace the contents of `tbody` with the following:
+Similarly we can add an option to delete notes when the "delete" button is pressed. Replace the contents of `tbody` with the following:
 
 ```jsx
 {this.props.notes.map((note, id) => (
@@ -462,7 +462,7 @@ submitNote = (e) => {
 }
 ```
 
-The component state now keeps track whether we are creating or updating a note, `submitNote` method changes behavior based on component state. We have also added helper method to load and reset form for updating notes.
+The component state now keeps track whether we are creating or updating a note. The `submitNote` method changes behavior based on component state. We have also added a helper method to load and reset the form for updating notes.
 
 Inside the form element, place a button to reset form after selecting notes to edit by mistake.
 
@@ -506,7 +506,7 @@ Much better!
 
 ########
 
-Since our webapp is working smoothly on client side but cannot store data permanently, in [next post]({filename}/modern-django-part-3.md) we will create models and APIs in django to store and manipulate notes from database so that we don't lose any notes.
+Our webapp is working smoothly client-side but cannot store data permanently. In the [next post]({filename}/modern-django-part-3.md) we will create models and APIs in django to store and manipulate notes from database. This way we don't lose any notes.
 
 
 ### Reference
