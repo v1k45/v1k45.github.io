@@ -65,7 +65,7 @@ Now that we have got django working, it is time to set it up to work with React 
 
 ### Setup ReactJS with Webpack
 
-If you haven't heard of Webpack before, it has now become the defacto tool to for _module bundling_, compiling all your dependencies to a small bundles (mostly one). You can learn more about webpack from their [official website](https://webpack.js.org/).
+If you haven't heard of Webpack before, it has now become the defacto tool to for _module bundling_, compiling all your dependencies to small bundles (mostly one). You can learn more about webpack from their [official website](https://webpack.js.org/).
 
 We won't be directly writing webpack configuration ourselves though, we will use `create-react-app` to generate the project boilerplate with all the configurations in it. Think of `create-react-app` as `django-admin startproject` command but much more powerful.
 
@@ -122,7 +122,7 @@ $ tree -I node_modules
 
 ```
 
-It is pretty obvious by the directory name that which file is store where.
+It is pretty obvious by the directory name which files are stored where.
 
 You can test this application by running
 
@@ -134,7 +134,7 @@ This will show a React welcome page.
 
 ![React welcome page]({filename}/images/modern-django-1-react-welcome.png)
 
-The development server has hot loading enabled by default. This means any changes you do in you source files will be instantly reflected in the browser without you having to refresh the page manually again and again.
+The development server has hot loading enabled by default. This means any changes you do in your source files will be instantly reflected in the browser without you having to refresh the page manually again and again.
 
 
 ### Integrating React and Django
@@ -159,7 +159,7 @@ WEBPACK_LOADER = {
 }
 ```
 
-To serve the index page of the application we need to create a view and template in django. We'll start by creating an index template at `templates/index.html` in project root. We will also need to update project's template settings so it it can detect the tempalte directory.
+To serve the index page of the application we need to create a view and template in django. We'll start by creating an index template at `templates/index.html` in project root. We will also need to update the project's template settings so it can detect the template directory.
 
 In `ponynote.settings.py`'s TEMPLATES setting:
 
@@ -193,7 +193,7 @@ Put the following content in your `templates/index.html`:
 </html>
 ```
 
-The HTML division with `root` id is the mounting point of our react application. The `render_bundle` tag with `main` as argument renders script tag for bundle named `main` which is produced by out webpack config.
+The HTML division with `root` id is the mounting point of our react application. The `render_bundle` tag with `main` as argument renders script tag for bundle named `main` which is produced by our webpack config.
 
 Now that the template is ready, let's create a view to serve it. Since this will be a plain template, we can use django's `TemplateView` directly in our url config. In your project `ponynote.urls.py` file:
 
@@ -269,7 +269,7 @@ headers: {
 },
 ```
 
-That's it. Stop the webpack server and run it again and go to [http://localhost:8000/](http://localhost:8000/), you should see the same react welocme page as you did on webpack server page.
+That's it. Stop the webpack server and run it again and go to [http://localhost:8000/](http://localhost:8000/), you should see the same react welcome page as you did on webpack server page.
 
 
 Now, any changes you do in `src/App.js` file will be instantly reflected on the opened page in browser using hot loading.
@@ -334,7 +334,7 @@ After this, create a directory `assets/bundles/` in your project root. This dire
 $ mkdir -p assets/bundles
 ```
 
-After this the change webpack's build output dir to `assets/bundles`. In `frontend/config/paths.js` change the `appBuild` value:
+After this then change webpack's build output dir to `assets/bundles`. In `frontend/config/paths.js` change the `appBuild` value:
 
 ```js
 // config after eject: we're in ./config/
@@ -394,7 +394,7 @@ module.exports = {
 }
 ```
 
-Here we configured webpack to set `static/bundles/` as `publicPath` because the build files will be stored in `assets/bundles` and `/static/` url points to the `assets` directory. We also remove `static` prefixes from filenames and path to prevent unnecessary nesting of build files. This will make webpack to build all files directory into `assets/bundles` without creating an additional `static` directory inside it.
+Here we configured webpack to set `static/bundles/` as `publicPath` because the build files will be stored in `assets/bundles` and `/static/` url points to the `assets` directory. We also remove `static` prefixes from filenames and path to prevent unnecessary nesting of build files. This will make webpack move the whole files directory into `assets/bundles` without creating an additional `static` directory inside it.
 
 After saving the file, we can build the javascript files using the following command:
 
@@ -402,7 +402,7 @@ After saving the file, we can build the javascript files using the following com
 $ npm run build
 ```
 
-This will create bunch of files in `assets/bundles` and a `webpack-stats.prod.json` file in the project root.
+This will create a bunch of files in `assets/bundles` and a `webpack-stats.prod.json` file in the project root.
 
 To check if everything was setup properly, we can run django server using production settings with webpack server stopped.
 
@@ -414,18 +414,18 @@ If you check [http://localhost:8000/](http://localhost:8000/), you'll see the sa
 
 #### Important points
 
-- It is better to build your js files on your CI server or your deployment server instead on including in version control or source code.
+- It is better to build your js files on your CI server or your deployment server instead of including them in version control or source code.
 
 - Make sure you run `collectstatic` after you `build` the js files, otherwise your webserver won't be able to find the build files.
 
-- Make sure your build generates a `webpack-stats.prod.json` file. If you are deploy by building the files manually, make sure you also include it when you're copying files from your machine to server.
+- Make sure your build generates a `webpack-stats.prod.json` file. If you are deploying by building the files manually, make sure you also include it when you're copying files from your machine to server.
 
 
-All the directory and file names specified above are not enforced in any senese. Feel free to change the directory location or file names to your liking. But make sure all config files are properly updated.
+All the directory and filenames specified above are not enforced in any sense. Feel free to change the directory location or filenames to your liking. But make sure all config files are properly updated.
 
 #############
 
-That's all on how to setup react and django to work together. In [next post]({filename}/modern-django-part-2.md) we'll setup in-application routing using `react-router-dom` and global state management using `redux`.
+That's all on how to setup react and django to work together. In the [next post]({filename}/modern-django-part-2.md) we'll setup in-application routing using `react-router-dom` and global state management using `redux`.
 
 
 ### References
