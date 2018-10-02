@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<feed xmlns="http://www.w3.org/2005/Atom"><title>v1k45</title><link href="http://v1k45.com/" rel="alternate"></link><link href="http://v1k45.com/feeds/all.atom.xml" rel="self"></link><id>http://v1k45.com/</id><updated>2018-04-13T21:00:00+05:30</updated><entry><title>Modern Django: Part 4: Adding authentication to React SPA using DRF</title><link href="http://v1k45.com/blog/modern-django-part-4-adding-authentication-to-react-spa-using-drf/" rel="alternate"></link><published>2018-04-13T21:00:00+05:30</published><updated>2018-04-13T21:00:00+05:30</updated><author><name>Vikas Yadav</name></author><id>tag:v1k45.com,2018-04-13:/blog/modern-django-part-4-adding-authentication-to-react-spa-using-drf/</id><summary type="html">&lt;p&gt;In &lt;a href="http://v1k45.com/blog/modern-django-part-3-creating-an-api-and-integrating-with-react/"&gt;last post&lt;/a&gt; we managed to create/read/update/delete notes directly into the database using API created by Django Rest Framework with React Frontend. In this one will we allow users to maintain separate notes and protect them using authentication.&lt;/p&gt;
-&lt;p&gt;The code for this repository is hosted on my …&lt;/p&gt;</summary><content type="html">&lt;p&gt;In &lt;a href="http://v1k45.com/blog/modern-django-part-3-creating-an-api-and-integrating-with-react/"&gt;last post&lt;/a&gt; we managed to create/read/update/delete notes directly into the database using API created by Django Rest Framework with React Frontend. In this one will we allow users to maintain separate notes and protect them using authentication.&lt;/p&gt;
-&lt;p&gt;The code for this repository is hosted on my github, &lt;a href="https://github.com/v1k45/ponynote"&gt;v1k45/ponynote&lt;/a&gt;. You can checkout &lt;code&gt;part-4&lt;/code&gt; branch to see all the changes done till the end of this part.&lt;/p&gt;
+<feed xmlns="http://www.w3.org/2005/Atom"><title>v1k45</title><link href="http://v1k45.com/" rel="alternate"></link><link href="http://v1k45.com/feeds/all.atom.xml" rel="self"></link><id>http://v1k45.com/</id><updated>2018-04-13T21:00:00+05:30</updated><entry><title>Modern Django: Part 4: Adding authentication to React SPA using DRF</title><link href="http://v1k45.com/blog/modern-django-part-4-adding-authentication-to-react-spa-using-drf/" rel="alternate"></link><published>2018-04-13T21:00:00+05:30</published><updated>2018-04-13T21:00:00+05:30</updated><author><name>Vikas Yadav</name></author><id>tag:v1k45.com,2018-04-13:/blog/modern-django-part-4-adding-authentication-to-react-spa-using-drf/</id><summary type="html">&lt;p&gt;In the &lt;a href="http://v1k45.com/blog/modern-django-part-3-creating-an-api-and-integrating-with-react/"&gt;last post&lt;/a&gt; we managed to create/read/update/delete notes directly into the database using the API created by Django Rest Framework with a React Frontend. In this one will we allow users to maintain separate notes and protect them using authentication.&lt;/p&gt;
+&lt;p&gt;The code for this repository is …&lt;/p&gt;</summary><content type="html">&lt;p&gt;In the &lt;a href="http://v1k45.com/blog/modern-django-part-3-creating-an-api-and-integrating-with-react/"&gt;last post&lt;/a&gt; we managed to create/read/update/delete notes directly into the database using the API created by Django Rest Framework with a React Frontend. In this one will we allow users to maintain separate notes and protect them using authentication.&lt;/p&gt;
+&lt;p&gt;The code for this repository is hosted on my github, &lt;a href="https://github.com/v1k45/ponynote"&gt;v1k45/ponynote&lt;/a&gt;. You can checkout branch &lt;code&gt;part-4&lt;/code&gt; to see all the changes done till the end of this part.&lt;/p&gt;
 &lt;h3&gt;Associating notes with users&lt;/h3&gt;
 &lt;p&gt;In order to allow users have separate notes, we'll need to associate notes with users. We'll start by adding an &lt;code&gt;owner&lt;/code&gt; field to the &lt;code&gt;Note&lt;/code&gt; model. Update &lt;code&gt;notes/models.py&lt;/code&gt;:&lt;/p&gt;
 &lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="kn"&gt;from&lt;/span&gt; &lt;span class="nn"&gt;django.db&lt;/span&gt; &lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="n"&gt;models&lt;/span&gt;
@@ -16,7 +16,7 @@
 &lt;/pre&gt;&lt;/div&gt;
 
 
-&lt;p&gt;Make migrations and migrate the changes to database.&lt;/p&gt;
+&lt;p&gt;Make migrations and migrate.&lt;/p&gt;
 &lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;(ponynote)  $ ./manage.py makemigrations
 Migrations for &amp;#39;notes&amp;#39;:
   notes/migrations/0002_note_owner.py
@@ -31,15 +31,15 @@ Running migrations:
 
 &lt;h3&gt;Creating Auth APIs&lt;/h3&gt;
 &lt;p&gt;We need to create APIs for basic authentication actions like registration, user endpoint, login and logout.&lt;/p&gt;
-&lt;p&gt;Django Rest Framework allows various kinds of authentication techniques including BasicAuth, SessionAuth, TokenAuth. For single page applications, Token Authentication and their variations like JSON Web Tokens (JWT) are quite common choices.&lt;/p&gt;
+&lt;p&gt;Django Rest Framework allows various kinds of authentication techniques including BasicAuth, SessionAuth and TokenAuth. For single page applications, Token Authentication and variations like JSON Web Tokens (JWT) are quite common choices.&lt;/p&gt;
 &lt;h4&gt;Installing and setting up &lt;code&gt;knox&lt;/code&gt;&lt;/h4&gt;
-&lt;p&gt;DRF ships with a built-in TokenAuthentication feature but it is not ideal for user facing SPAs because of it lacks basic features. Instead, we will use &lt;code&gt;django-rest-knox&lt;/code&gt;, It is similar to DRF's TokenAuth but much better and robust.&lt;/p&gt;
+&lt;p&gt;DRF ships with a built-in TokenAuthentication feature but it is not ideal for user facing SPAs because it lacks basic features. Instead, we will use &lt;code&gt;django-rest-knox&lt;/code&gt;. It is similar to DRF's TokenAuth but much better and robust.&lt;/p&gt;
 &lt;p&gt;Start by installing it:&lt;/p&gt;
 &lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;(ponynote)  $ pip install django-rest-knox
 &lt;/pre&gt;&lt;/div&gt;
 
 
-&lt;p&gt;Update &lt;code&gt;ponynote/settings.py&lt;/code&gt; by adding &lt;code&gt;knox&lt;/code&gt; and &lt;code&gt;rest_framework&lt;/code&gt; to  INSTALLED_APPS and setting knox's TokenAuthentication class as default in DRF.&lt;/p&gt;
+&lt;p&gt;Update &lt;code&gt;ponynote/settings.py&lt;/code&gt; by adding &lt;code&gt;knox&lt;/code&gt; and &lt;code&gt;rest_framework&lt;/code&gt; to &lt;code&gt;INSTALLED_APPS&lt;/code&gt; and setting knox's TokenAuthentication class as default in DRF.&lt;/p&gt;
 &lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="n"&gt;INSTALLED_APPS&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="p"&gt;[&lt;/span&gt;
     &lt;span class="s1"&gt;&amp;#39;rest_framework&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;
     &lt;span class="s1"&gt;&amp;#39;knox&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;
@@ -76,7 +76,7 @@ Running migrations:
 
 
 &lt;h4&gt;Creating a Registration API&lt;/h4&gt;
-&lt;p&gt;To allow users to create accounts, we will create an API for registration. Ideally you'd use feature-rich third party applications like &lt;code&gt;allauth&lt;/code&gt;, &lt;code&gt;rest-auth&lt;/code&gt;, &lt;code&gt;djoser&lt;/code&gt; etc to handle all kinds of authentication related needs. But since our application is simple, we are better off our own views/endpoints.&lt;/p&gt;
+&lt;p&gt;To allow users to create accounts, we will create an API for registration. Ideally you'd use feature-rich third party applications like &lt;code&gt;allauth&lt;/code&gt;, &lt;code&gt;rest-auth&lt;/code&gt;, &lt;code&gt;djoser&lt;/code&gt; etc to handle all kinds of authentication related needs. But since our application is simple, we are better off with our own views/endpoints.&lt;/p&gt;
 &lt;p&gt;Start by creating &lt;code&gt;CreateUserSerializer&lt;/code&gt; and &lt;code&gt;UserSerializer&lt;/code&gt; in &lt;code&gt;notes/serializers.py&lt;/code&gt;:&lt;/p&gt;
 &lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="kn"&gt;from&lt;/span&gt; &lt;span class="nn"&gt;rest_framework&lt;/span&gt; &lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="n"&gt;serializers&lt;/span&gt;
 &lt;span class="kn"&gt;from&lt;/span&gt; &lt;span class="nn"&gt;django.contrib.auth.models&lt;/span&gt; &lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="n"&gt;User&lt;/span&gt;
@@ -101,7 +101,7 @@ Running migrations:
 &lt;/pre&gt;&lt;/div&gt;
 
 
-&lt;p&gt;We'll use &lt;code&gt;CreateUserSerializer&lt;/code&gt; for validating input for registration. We aren't using &lt;code&gt;email&lt;/code&gt;, users will login with username and password. &lt;code&gt;UserSerializer&lt;/code&gt; will be used to return the output after user has successfully registered.&lt;/p&gt;
+&lt;p&gt;We'll use &lt;code&gt;CreateUserSerializer&lt;/code&gt; for validating input for registration. We aren't using &lt;code&gt;email&lt;/code&gt;, users will login with username and password. &lt;code&gt;UserSerializer&lt;/code&gt; will be used to return the output after the user has successfully registered.&lt;/p&gt;
 &lt;p&gt;Next, create the registration API, In &lt;code&gt;notes/api.py&lt;/code&gt;:&lt;/p&gt;
 &lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="kn"&gt;from&lt;/span&gt; &lt;span class="nn"&gt;rest_framework&lt;/span&gt; &lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="n"&gt;viewsets&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;permissions&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;generics&lt;/span&gt;
 &lt;span class="kn"&gt;from&lt;/span&gt; &lt;span class="nn"&gt;rest_framework.response&lt;/span&gt; &lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="n"&gt;Response&lt;/span&gt;
@@ -127,7 +127,7 @@ Running migrations:
 
 
 &lt;p&gt;The API is pretty staight-forward, we validate the user input and create an account if the validation passes. In the response, we return the user object in serialized format and an authentication token which will be used by the application to perform user-specific api calls.&lt;/p&gt;
-&lt;p&gt;Update the API endpoints to include registration API, In &lt;code&gt;notes/endpoints.py&lt;/code&gt;:&lt;/p&gt;
+&lt;p&gt;Update the API endpoints to include registration API. In &lt;code&gt;notes/endpoints.py&lt;/code&gt;:&lt;/p&gt;
 &lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="kn"&gt;from&lt;/span&gt; &lt;span class="nn"&gt;.api&lt;/span&gt; &lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="n"&gt;NoteViewSet&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;RegistrationAPI&lt;/span&gt;
 
 &lt;span class="n"&gt;urlpatterns&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="p"&gt;[&lt;/span&gt;
@@ -153,9 +153,9 @@ Running migrations:
 &lt;/pre&gt;&lt;/div&gt;
 
 
-&lt;p&gt;It handles valiadtion cases for fields, including uniquness of username. If you try to send the same data twice, you'll see that the API throws an error that the username needs to be unique.&lt;/p&gt;
+&lt;p&gt;It handles validation cases for fields, including uniquness of username. If you try to send the same data twice, you'll see that the API throws an error that the username needs to be unique.&lt;/p&gt;
 &lt;h4&gt;Creating login API&lt;/h4&gt;
-&lt;p&gt;Now that users can create account, we need a way for our users to log into the application and retrieve the authentication token for user-related actions.&lt;/p&gt;
+&lt;p&gt;Now that users can create accounts, we need a way for our users to log into the application and retrieve the authentication token for user-related actions.&lt;/p&gt;
 &lt;p&gt;First create a &lt;code&gt;LoginUserSerializer&lt;/code&gt; in &lt;code&gt;notes/serializers.py&lt;/code&gt;:&lt;/p&gt;
 &lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="kn"&gt;from&lt;/span&gt; &lt;span class="nn"&gt;django.contrib.auth&lt;/span&gt; &lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="n"&gt;authenticate&lt;/span&gt;
 
@@ -172,7 +172,7 @@ Running migrations:
 &lt;/pre&gt;&lt;/div&gt;
 
 
-&lt;p&gt;The &lt;code&gt;validate&lt;/code&gt; method of this serializer checks if the username and password are correct combination using django's &lt;code&gt;authenticate&lt;/code&gt; function. It also makes sure the user is active.&lt;/p&gt;
+&lt;p&gt;The &lt;code&gt;validate&lt;/code&gt; method of this serializer checks if the username and password are a correct combination using django's &lt;code&gt;authenticate&lt;/code&gt; function. It also makes sure the user is active.&lt;/p&gt;
 &lt;p&gt;Then create a &lt;code&gt;LoginAPI&lt;/code&gt; in &lt;code&gt;notes/api.py&lt;/code&gt;:&lt;/p&gt;
 &lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="kn"&gt;from&lt;/span&gt; &lt;span class="nn"&gt;.serializers&lt;/span&gt; &lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;NoteSerializer&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;CreateUserSerializer&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;
                           &lt;span class="n"&gt;UserSerializer&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;LoginUserSerializer&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
@@ -227,7 +227,7 @@ Running migrations:
 &lt;/pre&gt;&lt;/div&gt;
 
 
-&lt;p&gt;The above API will return user data for the authenticated user or 4XX range errors if user is not authenticated or token is incorrect.&lt;/p&gt;
+&lt;p&gt;The above API will return user data for the authenticated user or 4XX range errors if the user is not authenticated or the token is incorrect.&lt;/p&gt;
 &lt;p&gt;Add the API to &lt;code&gt;notes/endpoints.py&lt;/code&gt;:&lt;/p&gt;
 &lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="kn"&gt;from&lt;/span&gt; &lt;span class="nn"&gt;.api&lt;/span&gt; &lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="n"&gt;NoteViewSet&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;RegistrationAPI&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;LoginAPI&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;UserAPI&lt;/span&gt;
 
@@ -270,7 +270,7 @@ Running migrations:
 &lt;p&gt;Changed the API access from &lt;code&gt;AllowAny&lt;/code&gt; to &lt;code&gt;IsAuthenticated&lt;/code&gt;. This will require users to login/send authentication token in order to use this API.&lt;/p&gt;
 &lt;/li&gt;
 &lt;li&gt;
-&lt;p&gt;Override &lt;code&gt;perform_create&lt;/code&gt; method to save owner of the note while creating it.&lt;/p&gt;
+&lt;p&gt;Override &lt;code&gt;perform_create&lt;/code&gt; method to save the note owner when creating the note.&lt;/p&gt;
 &lt;/li&gt;
 &lt;li&gt;
 &lt;p&gt;Replace &lt;code&gt;queryset&lt;/code&gt; attribute with &lt;code&gt;get_queryset&lt;/code&gt; method and return the notes which the authenticated user owns.&lt;/p&gt;
@@ -283,7 +283,7 @@ Running migrations:
 
 &lt;p&gt;This will make sure the notes api is only accessible to authenticated users and the users get to see and modify their own notes only.&lt;/p&gt;
 &lt;h3&gt;Bringing Authentication to React app&lt;/h3&gt;
-&lt;p&gt;Authentication flow in the react application will be pretty simple, we'll redirect user to the login page if they are not logged in and then redirect back to the notes page after login is successful.&lt;/p&gt;
+&lt;p&gt;Authentication flow in the react application will be pretty simple, we'll redirect the user to the login page if they are not logged in and then redirect back to the notes page after login is successful.&lt;/p&gt;
 &lt;p&gt;&lt;img alt="react app authentication flow" src="http://v1k45.com/images/modern-django-4-auth-flow.png"&gt;&lt;/p&gt;
 &lt;h4&gt;Login page&lt;/h4&gt;
 &lt;p&gt;Let's start by creating a non-functional login page to which we will redirect un-authenticated users:&lt;/p&gt;
@@ -474,7 +474,7 @@ Running migrations:
 &lt;/pre&gt;&lt;/div&gt;
 
 
-&lt;h4&gt;Restricting anauthorized access&lt;/h4&gt;
+&lt;h4&gt;Restricting unauthorized access&lt;/h4&gt;
 &lt;p&gt;In order to stop unauthenticated users from accessing "private" routes we must redirect them to the login page.&lt;/p&gt;
 &lt;p&gt;To achieve this, we will create a &lt;code&gt;PrivateRoute&lt;/code&gt; method which only renders the target component if the user is authenticated.&lt;/p&gt;
 &lt;p&gt;Update &lt;code&gt;frontend/src/App.js&lt;/code&gt; file:&lt;/p&gt;
@@ -557,7 +557,7 @@ Running migrations:
 &lt;p&gt;In the above code, we moved the contents under &lt;code&gt;Provider&lt;/code&gt; to a separate component named &lt;code&gt;RootContainerComponent&lt;/code&gt;.&lt;/p&gt;
 &lt;p&gt;The &lt;code&gt;RootContainerComponent&lt;/code&gt;, as it's name suggests, is the root container of the application and is connected to redux store. It has a &lt;code&gt;PrivateRoute&lt;/code&gt; method which changes the component to be rendered when a route matches depending on the authentication state of the application. If the user is not logged in, it redirects the page to &lt;code&gt;/login&lt;/code&gt;.&lt;/p&gt;
 &lt;p&gt;The &lt;code&gt;RootContainer&lt;/code&gt; is then used inside &lt;code&gt;App&lt;/code&gt; component and is placed inside &lt;code&gt;Provider&lt;/code&gt; component.&lt;/p&gt;
-&lt;p&gt;After this, if you go the notes page (&lt;a href="http://localhost:8000/"&gt;localhost:8000&lt;/a&gt;), you'll be redirected to the login page.&lt;/p&gt;
+&lt;p&gt;After this, if you go to the notes page (&lt;a href="http://localhost:8000/"&gt;localhost:8000&lt;/a&gt;), you'll be redirected to the login page.&lt;/p&gt;
 &lt;h4&gt;Making login page work&lt;/h4&gt;
 &lt;p&gt;While this protects unauthorized access of the notes page, we still don't have the login feature implemented to allow authenticated users to access the page.&lt;/p&gt;
 &lt;p&gt;To make it work, create a &lt;code&gt;login&lt;/code&gt; function in &lt;code&gt;frontend/src/actions/auth.js&lt;/code&gt;:&lt;/p&gt;
@@ -653,7 +653,7 @@ Running migrations:
 &lt;/pre&gt;&lt;/div&gt;
 
 
-&lt;p&gt;After this you should be able to login from the login page and taken to the notes page if the credentials are correct.&lt;/p&gt;
+&lt;p&gt;After this you should be able to login from the login page and be taken to the notes page if the credentials are correct.&lt;/p&gt;
 &lt;h3&gt;Registration page&lt;/h3&gt;
 &lt;p&gt;Until now we used the registraton API directly to create users. Since we have all actions and reducers in place, we can create a registration page too.&lt;/p&gt;
 &lt;p&gt;Start by creating &lt;code&gt;frontend/src/components/Register.jsx&lt;/code&gt; and add the following code:&lt;/p&gt;
@@ -739,7 +739,7 @@ Running migrations:
 &lt;/pre&gt;&lt;/div&gt;
 
 
-&lt;p&gt;As you can see, the component is pretty similar to &lt;code&gt;Login.jsx&lt;/code&gt; only noteable difference being the &lt;code&gt;register&lt;/code&gt; function/action instead of &lt;code&gt;login&lt;/code&gt; and some other text.&lt;/p&gt;
+&lt;p&gt;As you can see, the component is pretty similar to &lt;code&gt;Login.jsx&lt;/code&gt; only notable difference being the &lt;code&gt;register&lt;/code&gt; function/action instead of &lt;code&gt;login&lt;/code&gt; and some other text.&lt;/p&gt;
 &lt;p&gt;Add a &lt;code&gt;register&lt;/code&gt; action to &lt;code&gt;frontend/src/actions/auth.js&lt;/code&gt;:&lt;/p&gt;
 &lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="kr"&gt;export&lt;/span&gt; &lt;span class="kr"&gt;const&lt;/span&gt; &lt;span class="nx"&gt;register&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="nx"&gt;username&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="nx"&gt;password&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="p"&gt;=&amp;gt;&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
   &lt;span class="k"&gt;return&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="nx"&gt;dispatch&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="nx"&gt;getState&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="p"&gt;=&amp;gt;&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
@@ -813,7 +813,7 @@ Running migrations:
 &lt;/pre&gt;&lt;/div&gt;
 
 
-&lt;p&gt;Now you'd be able to register by going to &lt;a href="http://localhost:8000/register"&gt;localhost:8000/register&lt;/a&gt;. You'll also see erros on the page if you try to register using an existing username.&lt;/p&gt;
+&lt;p&gt;Now you'd be able to register by going to &lt;a href="http://localhost:8000/register"&gt;localhost:8000/register&lt;/a&gt;. You'll also see errors on the page if you try to register using an existing username.&lt;/p&gt;
 &lt;h3&gt;Using auth in notes actions&lt;/h3&gt;
 &lt;p&gt;While the login page works and the notes page is displayed after login, the core functionality of the notes page is still non-functional. This is because the notes API now requires the user to be logged in to be able to use it.&lt;/p&gt;
 &lt;p&gt;Let's update notes actions to fix this issue:&lt;/p&gt;
@@ -989,7 +989,7 @@ Running migrations:
 &lt;/pre&gt;&lt;/div&gt;
 
 
-&lt;p&gt;Now, let's use this action in &lt;code&gt;PonyNote&lt;/code&gt; component to show a logout link. Update &lt;code&gt;frontend/src/components/PonyNote.jsx&lt;/code&gt;:&lt;/p&gt;
+&lt;p&gt;Now, let's use this action in the &lt;code&gt;PonyNote&lt;/code&gt; component to show a logout link. Update &lt;code&gt;frontend/src/components/PonyNote.jsx&lt;/code&gt;:&lt;/p&gt;
 &lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;&lt;span class="n"&gt;notes&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;auth&lt;/span&gt;&lt;span class="p"&gt;}&lt;/span&gt; &lt;span class="kn"&gt;from&lt;/span&gt; &lt;span class="s2"&gt;&amp;quot;../actions&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
 
 &lt;span class="k"&gt;class&lt;/span&gt; &lt;span class="nc"&gt;PonyNote&lt;/span&gt; &lt;span class="n"&gt;extends&lt;/span&gt; &lt;span class="n"&gt;Component&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
@@ -1038,28 +1038,27 @@ Running migrations:
 &lt;/pre&gt;&lt;/div&gt;
 
 
-&lt;p&gt;This will display the username of logged in user along with a logout link. Our application will look something like this at this point:&lt;/p&gt;
+&lt;p&gt;This will display the username of the logged in user along with a logout link. Our application will look something like this at this point:&lt;/p&gt;
 &lt;p&gt;&lt;img alt="final page" src="http://v1k45.com/images/modern-django-4-final.png"&gt;&lt;/p&gt;
 &lt;h3&gt;Summary&lt;/h3&gt;
-&lt;p&gt;Now you'll be able to create, read, update and delete notes privately using user accounts. The notes pages will ebe protected by a login page and anyone would be able to register and start managing their notes.&lt;/p&gt;
-&lt;p&gt;I'm not sure what should I post for the next part. I am thinking of either server-side rendering (SSR) of the react application or deployment procedure of the application as a final post.&lt;/p&gt;
+&lt;p&gt;Now you'll be able to create, read, update and delete notes privately using user accounts. The notes pages will be protected by a login page and anyone would be able to register and start managing their notes.&lt;/p&gt;
+&lt;p&gt;I'm not sure what I should post for the next part. I am thinking of either server-side rendering (SSR) of the react application or deployment procedure of the application as a final post.&lt;/p&gt;
 &lt;h3&gt;Reference&lt;/h3&gt;
 &lt;ul&gt;
 &lt;li&gt;&lt;a href="http://www.django-rest-framework.org/"&gt;Django Rest Framework&lt;/a&gt;&lt;/li&gt;
 &lt;li&gt;&lt;a href="https://github.com/James1345/django-rest-knox/"&gt;Django Rest Knox&lt;/a&gt;&lt;/li&gt;
-&lt;/ul&gt;</content><category term="python"></category><category term="django"></category><category term="javascript"></category><category term="js"></category><category term="react"></category><category term="django-rest-framework"></category><category term="django-rest-knox"></category></entry><entry><title>Modern Django: Part 3: Creating an API and integrating with React</title><link href="http://v1k45.com/blog/modern-django-part-3-creating-an-api-and-integrating-with-react/" rel="alternate"></link><published>2018-03-03T21:40:00+05:30</published><updated>2018-03-03T21:40:00+05:30</updated><author><name>Vikas Yadav</name></author><id>tag:v1k45.com,2018-03-03:/blog/modern-django-part-3-creating-an-api-and-integrating-with-react/</id><summary type="html">&lt;p&gt;In &lt;a href="http://v1k45.com/blog/modern-django-part-2-redux-and-react-router-setup/"&gt;last post&lt;/a&gt; we developed a frontend of our note taking application which has ability to store notes on client-side using redux store. In this part we will create database models and APIs to create, read, update and delete notes in database using react frontend and redux store.&lt;/p&gt;
-&lt;p&gt;The code …&lt;/p&gt;</summary><content type="html">&lt;p&gt;In &lt;a href="http://v1k45.com/blog/modern-django-part-2-redux-and-react-router-setup/"&gt;last post&lt;/a&gt; we developed a frontend of our note taking application which has ability to store notes on client-side using redux store. In this part we will create database models and APIs to create, read, update and delete notes in database using react frontend and redux store.&lt;/p&gt;
-&lt;p&gt;The code for this repository is hosted on my github, &lt;a href="https://github.com/v1k45/ponynote"&gt;v1k45/ponynote&lt;/a&gt;. You can checkout &lt;code&gt;part-3&lt;/code&gt; branch to all the changes done till the end of this part.&lt;/p&gt;
+&lt;/ul&gt;</content><category term="python"></category><category term="django"></category><category term="javascript"></category><category term="js"></category><category term="react"></category><category term="django-rest-framework"></category><category term="django-rest-knox"></category></entry><entry><title>Modern Django: Part 3: Creating an API and integrating with React</title><link href="http://v1k45.com/blog/modern-django-part-3-creating-an-api-and-integrating-with-react/" rel="alternate"></link><published>2018-03-03T21:40:00+05:30</published><updated>2018-03-03T21:40:00+05:30</updated><author><name>Vikas Yadav</name></author><id>tag:v1k45.com,2018-03-03:/blog/modern-django-part-3-creating-an-api-and-integrating-with-react/</id><summary type="html">&lt;p&gt;In the &lt;a href="http://v1k45.com/blog/modern-django-part-2-redux-and-react-router-setup/"&gt;last post&lt;/a&gt; we developed a frontend for our note taking application which has the ability to store notes client-side using redux store. In this part we will create database models and APIs to create, read, update and delete notes in a database using react frontend and redux store …&lt;/p&gt;</summary><content type="html">&lt;p&gt;In the &lt;a href="http://v1k45.com/blog/modern-django-part-2-redux-and-react-router-setup/"&gt;last post&lt;/a&gt; we developed a frontend for our note taking application which has the ability to store notes client-side using redux store. In this part we will create database models and APIs to create, read, update and delete notes in a database using react frontend and redux store.&lt;/p&gt;
+&lt;p&gt;The code for this repository is hosted on my github, &lt;a href="https://github.com/v1k45/ponynote"&gt;v1k45/ponynote&lt;/a&gt;. You can checkout &lt;code&gt;part-3&lt;/code&gt; branch to see all the changes done till the end of this part.&lt;/p&gt;
 &lt;h3&gt;Creating DB Models&lt;/h3&gt;
 &lt;p&gt;To store the notes in database, first we need to create models. We'll start by creating an app and then a Note model inside it.&lt;/p&gt;
-&lt;p&gt;In the project root, create an app using &lt;code&gt;startapp&lt;/code&gt; command and add it to admin.&lt;/p&gt;
+&lt;p&gt;In the project root, create an app using the &lt;code&gt;startapp&lt;/code&gt; command.&lt;/p&gt;
 &lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;(ponynote)  $ ./manage.py startapp notes
 &lt;/pre&gt;&lt;/div&gt;
 
 
 &lt;p&gt;Add &lt;code&gt;notes.apps.NotesConfig&lt;/code&gt; to the &lt;code&gt;INSTALLED_APPS&lt;/code&gt; list in &lt;code&gt;ponynote/settings.py&lt;/code&gt;.&lt;/p&gt;
 &lt;h3&gt;Note Model&lt;/h3&gt;
-&lt;p&gt;Open &lt;code&gt;notes/models.py&lt;/code&gt; create the following model:&lt;/p&gt;
+&lt;p&gt;Open &lt;code&gt;notes/models.py&lt;/code&gt; add the following model:&lt;/p&gt;
 &lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="kn"&gt;from&lt;/span&gt; &lt;span class="nn"&gt;django.db&lt;/span&gt; &lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="n"&gt;models&lt;/span&gt;
 
 
@@ -1073,7 +1072,7 @@ Running migrations:
 
 
 &lt;p&gt;Since our application feature is limited, two fields in the model will do.&lt;/p&gt;
-&lt;p&gt;Migrate the database to add this table using the following command:&lt;/p&gt;
+&lt;p&gt;Migrate the database to add this table using the following commands:&lt;/p&gt;
 &lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;(ponynote)  $ ./manage.py makemigrations
 Migrations for &amp;#39;notes&amp;#39;:
   notes/migrations/0001_initial.py
@@ -1094,7 +1093,7 @@ Running migrations:
 &lt;/pre&gt;&lt;/div&gt;
 
 
-&lt;p&gt;Now create three python files, &lt;code&gt;api.py&lt;/code&gt;, &lt;code&gt;serialiers.py&lt;/code&gt; and &lt;code&gt;endpoints.py&lt;/code&gt;.&lt;/p&gt;
+&lt;p&gt;Now create three python files, &lt;code&gt;api.py&lt;/code&gt;, &lt;code&gt;serializers.py&lt;/code&gt; and &lt;code&gt;endpoints.py&lt;/code&gt;.&lt;/p&gt;
 &lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;$ touch notes/api.py notes/serializers.py notes/endpoints.py
 &lt;/pre&gt;&lt;/div&gt;
 
@@ -1113,7 +1112,7 @@ Running migrations:
 
 
 &lt;p&gt;The above serializer is &lt;code&gt;ModelSerializer&lt;/code&gt;, it has an API similar (somewhat) to the &lt;code&gt;ModelForm&lt;/code&gt; class in django.&lt;/p&gt;
-&lt;p&gt;After creating serializer, create an API for &lt;code&gt;Note&lt;/code&gt; model using &lt;code&gt;NoteSerialzer&lt;/code&gt;:&lt;/p&gt;
+&lt;p&gt;After creating serializer, create an API for the &lt;code&gt;Note&lt;/code&gt; model using &lt;code&gt;NoteSerialzer&lt;/code&gt;:&lt;/p&gt;
 &lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="kn"&gt;from&lt;/span&gt; &lt;span class="nn"&gt;rest_framework&lt;/span&gt; &lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="n"&gt;viewsets&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;permissions&lt;/span&gt;
 
 &lt;span class="kn"&gt;from&lt;/span&gt; &lt;span class="nn"&gt;.models&lt;/span&gt; &lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="n"&gt;Note&lt;/span&gt;
@@ -1128,7 +1127,7 @@ Running migrations:
 
 
 &lt;p&gt;A viewset works like a generic model view in django views. Lets allow all types of requests to this endpoint for now.&lt;/p&gt;
-&lt;p&gt;Lets register this API ViewSet to the DRF router and add it to django urls. In the &lt;code&gt;notes/endpoints.py&lt;/code&gt; write the following:&lt;/p&gt;
+&lt;p&gt;Lets register this API ViewSet to the DRF router and add it to django's urls. In the &lt;code&gt;notes/endpoints.py&lt;/code&gt; write the following:&lt;/p&gt;
 &lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="kn"&gt;from&lt;/span&gt; &lt;span class="nn"&gt;django.conf.urls&lt;/span&gt; &lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="n"&gt;include&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;url&lt;/span&gt;
 &lt;span class="kn"&gt;from&lt;/span&gt; &lt;span class="nn"&gt;rest_framework&lt;/span&gt; &lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="n"&gt;routers&lt;/span&gt;
 
@@ -1198,9 +1197,9 @@ Running migrations:
 
 
 &lt;h3&gt;Integrating DRF API with Frontend&lt;/h3&gt;
-&lt;p&gt;To be able to fetch and manipulate notes in the backend from frontend, we need to make use of few libraries. In order to fetch notes, we will use &lt;code&gt;whatwg-fetch&lt;/code&gt; (already included with &lt;code&gt;create-react-app&lt;/code&gt;) and &lt;code&gt;redux-thunk&lt;/code&gt; for asynchronous action creation.&lt;/p&gt;
+&lt;p&gt;To be able to fetch and manipulate notes in the backend from the frontend, we need to make use of a few libraries. In order to fetch notes, we will use &lt;code&gt;whatwg-fetch&lt;/code&gt; (already included with &lt;code&gt;create-react-app&lt;/code&gt;) and &lt;code&gt;redux-thunk&lt;/code&gt; for asynchronous action creation.&lt;/p&gt;
 &lt;h4&gt;What is redux-thunk?&lt;/h4&gt;
-&lt;p&gt;Redux Thunk middleware allows you to write action creators that return a function instead of an action. The thunk can be used to delay the dispatch of an action, or to dispatch only if a certain condition is met. The inner function receives the store methods dispatch and getState as parameters&lt;/p&gt;
+&lt;p&gt;Redux Thunk middleware allows you to write action creators that return a function instead of an action. The thunk can be used to delay the dispatch of an action, or to dispatch only if a condition is met. The inner function receives the store methods &lt;code&gt;dispatch&lt;/code&gt; and &lt;code&gt;getState&lt;/code&gt; as parameters.&lt;/p&gt;
 &lt;h4&gt;Install and setup redux-thunk&lt;/h4&gt;
 &lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;$ npm install redux-thunk --save
 &lt;/pre&gt;&lt;/div&gt;
@@ -1215,7 +1214,7 @@ Running migrations:
 
 
 &lt;h4&gt;Async redux actions&lt;/h4&gt;
-&lt;p&gt;Let us create our first async action using redux thunk. Write the follwoing function in &lt;code&gt;actions/notes.js&lt;/code&gt;:&lt;/p&gt;
+&lt;p&gt;Let us create our first async action using redux thunk. Write the following function in &lt;code&gt;actions/notes.js&lt;/code&gt;:&lt;/p&gt;
 &lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="kr"&gt;export&lt;/span&gt; &lt;span class="kr"&gt;const&lt;/span&gt; &lt;span class="nx"&gt;fetchNotes&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="p"&gt;()&lt;/span&gt; &lt;span class="p"&gt;=&amp;gt;&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
   &lt;span class="k"&gt;return&lt;/span&gt; &lt;span class="nx"&gt;dispatch&lt;/span&gt; &lt;span class="p"&gt;=&amp;gt;&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
     &lt;span class="kd"&gt;let&lt;/span&gt; &lt;span class="nx"&gt;headers&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;Content-Type&amp;quot;&lt;/span&gt;&lt;span class="o"&gt;:&lt;/span&gt; &lt;span class="s2"&gt;&amp;quot;application/json&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;};&lt;/span&gt;
@@ -1232,14 +1231,14 @@ Running migrations:
 &lt;/pre&gt;&lt;/div&gt;
 
 
-&lt;p&gt;The above code will perform an API call to the django application at &lt;code&gt;api/notes/&lt;/code&gt; and dispatch the &lt;code&gt;FETCH_NOTES&lt;/code&gt; action when response is received.&lt;/p&gt;
-&lt;p&gt;Now handle this action in the reducer &lt;code&gt;reducers/notes.js&lt;/code&gt; by adding &lt;code&gt;FETCH_NOTES&lt;/code&gt; case in the &lt;code&gt;switch&lt;/code&gt; statement.:&lt;/p&gt;
+&lt;p&gt;The above code will perform an API call to the django application at &lt;code&gt;api/notes/&lt;/code&gt; and dispatch the &lt;code&gt;FETCH_NOTES&lt;/code&gt; action when the response is received.&lt;/p&gt;
+&lt;p&gt;Now handle this action in the reducer &lt;code&gt;reducers/notes.js&lt;/code&gt; by adding a &lt;code&gt;FETCH_NOTES&lt;/code&gt; case in the &lt;code&gt;switch&lt;/code&gt; statement.:&lt;/p&gt;
 &lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="k"&gt;case&lt;/span&gt; &lt;span class="s1"&gt;&amp;#39;FETCH_NOTES&amp;#39;&lt;/span&gt;&lt;span class="o"&gt;:&lt;/span&gt;
     &lt;span class="k"&gt;return&lt;/span&gt; &lt;span class="p"&gt;[...&lt;/span&gt;&lt;span class="nx"&gt;state&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="p"&gt;...&lt;/span&gt;&lt;span class="nx"&gt;action&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="nx"&gt;notes&lt;/span&gt;&lt;span class="p"&gt;];&lt;/span&gt;
 &lt;/pre&gt;&lt;/div&gt;
 
 
-&lt;p&gt;Since we going to use the server database for notes, lets set the &lt;code&gt;initialState&lt;/code&gt; as an empty array by removing the dummy note.&lt;/p&gt;
+&lt;p&gt;Since we are going to use the server database for notes, lets set the &lt;code&gt;initialState&lt;/code&gt; as an empty array by removing the dummy note.&lt;/p&gt;
 &lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="kr"&gt;const&lt;/span&gt; &lt;span class="nx"&gt;initialState&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="p"&gt;[];&lt;/span&gt;
 &lt;/pre&gt;&lt;/div&gt;
 
@@ -1256,16 +1255,16 @@ Running migrations:
 &lt;/pre&gt;&lt;/div&gt;
 
 
-&lt;p&gt;And call that action dispatcher when component mounts so that the notes are fetched from API and loaded to redux store. Add &lt;code&gt;componentDidMount&lt;/code&gt; method to &lt;code&gt;PonyNote&lt;/code&gt; class:&lt;/p&gt;
+&lt;p&gt;And call that action dispatcher when component mounts so that the notes are fetched from the API and loaded into the redux store. Add &lt;code&gt;componentDidMount&lt;/code&gt; method to &lt;code&gt;PonyNote&lt;/code&gt; class:&lt;/p&gt;
 &lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="nx"&gt;componentDidMount&lt;/span&gt;&lt;span class="p"&gt;()&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
     &lt;span class="k"&gt;this&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="nx"&gt;props&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="nx"&gt;fetchNotes&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;
 &lt;span class="p"&gt;}&lt;/span&gt;
 &lt;/pre&gt;&lt;/div&gt;
 
 
-&lt;p&gt;On reloading, you should see the list of notes which you created using the API directly. If you haven't already, lets connect the &lt;code&gt;addNote&lt;/code&gt; action to the &lt;code&gt;API&lt;/code&gt; so that we start seeing notes directly from the database.&lt;/p&gt;
+&lt;p&gt;On reload you should see the list of notes which you created using the API directly. If you haven't already, lets connect the &lt;code&gt;addNote&lt;/code&gt; action to the &lt;code&gt;API&lt;/code&gt; so that we start seeing notes directly from the database.&lt;/p&gt;
 &lt;h4&gt;Add notes using API call&lt;/h4&gt;
-&lt;p&gt;Lets update the &lt;code&gt;addNote&lt;/code&gt; action in &lt;code&gt;actions/notes.js&lt;/code&gt; file to send a &lt;code&gt;POST&lt;/code&gt; request to notes api:&lt;/p&gt;
+&lt;p&gt;Lets update the &lt;code&gt;addNote&lt;/code&gt; action in &lt;code&gt;actions/notes.js&lt;/code&gt; file to send a &lt;code&gt;POST&lt;/code&gt; request to the notes api:&lt;/p&gt;
 &lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="kr"&gt;export&lt;/span&gt; &lt;span class="kr"&gt;const&lt;/span&gt; &lt;span class="nx"&gt;addNote&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="nx"&gt;text&lt;/span&gt; &lt;span class="p"&gt;=&amp;gt;&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
   &lt;span class="k"&gt;return&lt;/span&gt; &lt;span class="nx"&gt;dispatch&lt;/span&gt; &lt;span class="p"&gt;=&amp;gt;&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
     &lt;span class="kd"&gt;let&lt;/span&gt; &lt;span class="nx"&gt;headers&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;Content-Type&amp;quot;&lt;/span&gt;&lt;span class="o"&gt;:&lt;/span&gt; &lt;span class="s2"&gt;&amp;quot;application/json&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;};&lt;/span&gt;
@@ -1283,29 +1282,27 @@ Running migrations:
 &lt;/pre&gt;&lt;/div&gt;
 
 
-&lt;p&gt;In the above action function, our applcation will send a POST request with a JSON data of the note text and then disptach the &lt;code&gt;ADD_NOTE&lt;/code&gt; action which will isert the added note to redux store. In &lt;code&gt;reducers/notes.js&lt;/code&gt;, update the &lt;code&gt;ADD_NOTE&lt;/code&gt; case to add the whole note object instead of text.&lt;/p&gt;
+&lt;p&gt;In the above action function, our application will send a POST request with JSON data of the note text and then disptach the &lt;code&gt;ADD_NOTE&lt;/code&gt; action which will insert the added note to redux store. In &lt;code&gt;reducers/notes.js&lt;/code&gt;, update the &lt;code&gt;ADD_NOTE&lt;/code&gt; case to add the whole note object instead of text.&lt;/p&gt;
 &lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="k"&gt;case&lt;/span&gt; &lt;span class="s1"&gt;&amp;#39;ADD_NOTE&amp;#39;&lt;/span&gt;&lt;span class="o"&gt;:&lt;/span&gt;
     &lt;span class="k"&gt;return&lt;/span&gt; &lt;span class="p"&gt;[...&lt;/span&gt;&lt;span class="nx"&gt;state&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="nx"&gt;action&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="nx"&gt;note&lt;/span&gt;&lt;span class="p"&gt;];&lt;/span&gt;
 &lt;/pre&gt;&lt;/div&gt;
 
 
-&lt;p&gt;After this a slight modification in our &lt;code&gt;PonyNote.jsx&lt;/code&gt; component so that we reset the form only after the note has been successfully created:&lt;/p&gt;
-&lt;p&gt;Add a &lt;code&gt;return&lt;/code&gt; statement to the action dispatch call so that we can chain additional callbacks to the API call promise.&lt;/p&gt;
+&lt;p&gt;After this change our &lt;code&gt;PonyNote.jsx&lt;/code&gt; component so that we reset the form only after the note has been successfully created. Add a &lt;code&gt;return&lt;/code&gt; statement to the action dispatch call so that we can chain additional callbacks to the API call promise.&lt;/p&gt;
 &lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="nx"&gt;addNote&lt;/span&gt;&lt;span class="o"&gt;:&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="nx"&gt;text&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="p"&gt;=&amp;gt;&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
     &lt;span class="k"&gt;return&lt;/span&gt; &lt;span class="nx"&gt;dispatch&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="nx"&gt;notes&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="nx"&gt;addNote&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="nx"&gt;text&lt;/span&gt;&lt;span class="p"&gt;));&lt;/span&gt;
 &lt;span class="p"&gt;},&lt;/span&gt;
 &lt;/pre&gt;&lt;/div&gt;
 
 
-&lt;p&gt;Update the &lt;code&gt;submitNote&lt;/code&gt; method by moving &lt;code&gt;this.resetForm()&lt;/code&gt; call from bottom to a callback for &lt;code&gt;addNote&lt;/code&gt; function:&lt;/p&gt;
+&lt;p&gt;Update the &lt;code&gt;submitNote&lt;/code&gt; method by moving &lt;code&gt;this.resetForm()&lt;/code&gt; call from the bottom to a callback for &lt;code&gt;addNote&lt;/code&gt; function:&lt;/p&gt;
 &lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="k"&gt;this&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="nx"&gt;props&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="nx"&gt;addNote&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="k"&gt;this&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="nx"&gt;state&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="nx"&gt;text&lt;/span&gt;&lt;span class="p"&gt;).&lt;/span&gt;&lt;span class="nx"&gt;then&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="k"&gt;this&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="nx"&gt;resetForm&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
 &lt;/pre&gt;&lt;/div&gt;
 
 
-&lt;p&gt;Similarly you can &lt;code&gt;catch&lt;/code&gt; any errors thrown by the promise and handle API error and show then on the UI. For sake of simplicity, we will not cover that.&lt;/p&gt;
+&lt;p&gt;Similarly you can &lt;code&gt;catch&lt;/code&gt; any errors thrown by the promise and handle API error and show them on the UI. To keep this post simple we will not cover that.&lt;/p&gt;
 &lt;h4&gt;Updating notes&lt;/h4&gt;
-&lt;p&gt;Updating notes is very similar to &lt;code&gt;addNote&lt;/code&gt; action which calls API. All we need to do is pass the &lt;code&gt;note.id&lt;/code&gt; in endpoint url.&lt;/p&gt;
-&lt;p&gt;Update the &lt;code&gt;updateNote&lt;/code&gt; action in &lt;code&gt;actions/notes.js&lt;/code&gt;:&lt;/p&gt;
+&lt;p&gt;Updating notes is very similar to the &lt;code&gt;addNote&lt;/code&gt; action which calls the API. All we need to do is pass the &lt;code&gt;note.id&lt;/code&gt; in the url. Update the &lt;code&gt;updateNote&lt;/code&gt; action in &lt;code&gt;actions/notes.js&lt;/code&gt;:&lt;/p&gt;
 &lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="kr"&gt;export&lt;/span&gt; &lt;span class="kr"&gt;const&lt;/span&gt; &lt;span class="nx"&gt;updateNote&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="nx"&gt;index&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="nx"&gt;text&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="p"&gt;=&amp;gt;&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
   &lt;span class="k"&gt;return&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="nx"&gt;dispatch&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="nx"&gt;getState&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="p"&gt;=&amp;gt;&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
 
@@ -1327,9 +1324,9 @@ Running migrations:
 &lt;/pre&gt;&lt;/div&gt;
 
 
-&lt;p&gt;Note that the first argument of &lt;code&gt;updateNote&lt;/code&gt; is &lt;code&gt;index&lt;/code&gt; instead of &lt;code&gt;id&lt;/code&gt;, this is done to easily get the note which is being updated. Also, we have a &lt;code&gt;getState&lt;/code&gt; argument for ther return action function, it is used to get current state of the application. We used it to get the note.id using the index we had.&lt;/p&gt;
-&lt;p&gt;Another important thing is that the request method is &lt;code&gt;PUT&lt;/code&gt;, which indicates that the resource on server should be updated. In the final action dispatch we have the index and newly saved note as the data, we will use it in the reducer.&lt;/p&gt;
-&lt;p&gt;Update &lt;code&gt;UPDATE_NOTE&lt;/code&gt; case in &lt;code&gt;redcers/notes.js&lt;/code&gt;:&lt;/p&gt;
+&lt;p&gt;Note that the first argument of &lt;code&gt;updateNote&lt;/code&gt; is &lt;code&gt;index&lt;/code&gt; instead of &lt;code&gt;id&lt;/code&gt;, this is done to easily get the note which is being updated. Also, we have a &lt;code&gt;getState&lt;/code&gt; argument for the return action function, it is used to get the current state of the application. We used it to get the note.id using the index we had.&lt;/p&gt;
+&lt;p&gt;Another important thing is that the request method is &lt;code&gt;PUT&lt;/code&gt;, which indicates that the resource on the server should be updated. In the final action dispatch we have the index and newly saved note as the data, we will use it in the reducer.&lt;/p&gt;
+&lt;p&gt;Update the &lt;code&gt;UPDATE_NOTE&lt;/code&gt; case in &lt;code&gt;redcers/notes.js&lt;/code&gt;:&lt;/p&gt;
 &lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="k"&gt;case&lt;/span&gt; &lt;span class="s1"&gt;&amp;#39;UPDATE_NOTE&amp;#39;&lt;/span&gt;&lt;span class="o"&gt;:&lt;/span&gt;
     &lt;span class="kd"&gt;let&lt;/span&gt; &lt;span class="nx"&gt;noteToUpdate&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="nx"&gt;noteList&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="nx"&gt;action&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="nx"&gt;index&lt;/span&gt;&lt;span class="p"&gt;]&lt;/span&gt;
     &lt;span class="nx"&gt;noteToUpdate&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="nx"&gt;text&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="nx"&gt;action&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="nx"&gt;note&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="nx"&gt;text&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
@@ -1351,7 +1348,7 @@ Running migrations:
 
 &lt;p&gt;Now you'll be able to update notes and save it in the database.&lt;/p&gt;
 &lt;h4&gt;Deleting Notes&lt;/h4&gt;
-&lt;p&gt;Update &lt;code&gt;actions/notes.js&lt;/code&gt;'s &lt;code&gt;deleteNote&lt;/code&gt; action to send &lt;code&gt;DELETE&lt;/code&gt; request to the API server:&lt;/p&gt;
+&lt;p&gt;Update &lt;code&gt;actions/notes.js&lt;/code&gt;'s &lt;code&gt;deleteNote&lt;/code&gt; action to send a &lt;code&gt;DELETE&lt;/code&gt; request to the API server:&lt;/p&gt;
 &lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="kr"&gt;export&lt;/span&gt; &lt;span class="kr"&gt;const&lt;/span&gt; &lt;span class="nx"&gt;deleteNote&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="nx"&gt;index&lt;/span&gt; &lt;span class="p"&gt;=&amp;gt;&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
   &lt;span class="k"&gt;return&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="nx"&gt;dispatch&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="nx"&gt;getState&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="p"&gt;=&amp;gt;&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
 
@@ -1380,8 +1377,8 @@ Running migrations:
 
 
 &lt;h3&gt;Summary&lt;/h3&gt;
-&lt;p&gt;Now you'll be able to create, read, update and delete notes using the API built using django-rest-framework. All the notes are stored in redux store in client side and changes will be reflected in the database and persist on reload.&lt;/p&gt;
-&lt;p&gt;In &lt;a href="http://v1k45.com/blog/modern-django-part-4-adding-authentication-to-react-spa-using-drf/"&gt;next part&lt;/a&gt; we'll add authentication to pony note so that multiple users can maintain their notes privately. We'll implement login/signup flow and assosiate notes with users.&lt;/p&gt;
+&lt;p&gt;Now you'll be able to create, read, update and delete notes using the API built using django-rest-framework. All the notes are stored in redux store client-side, changes will be reflected in the database and persist on reload.&lt;/p&gt;
+&lt;p&gt;In the &lt;a href="http://v1k45.com/blog/modern-django-part-4-adding-authentication-to-react-spa-using-drf/"&gt;next part&lt;/a&gt; we'll add authentication to pony note so that multiple users can maintain their notes privately. We'll implement login/signup flow and associate notes with users.&lt;/p&gt;
 &lt;h3&gt;Reference&lt;/h3&gt;
 &lt;ul&gt;
 &lt;li&gt;&lt;a href="http://www.django-rest-framework.org/"&gt;Django Rest Framework&lt;/a&gt;&lt;/li&gt;
@@ -1389,13 +1386,13 @@ Running migrations:
 &lt;li&gt;&lt;a href="https://stackoverflow.com/a/35415559/4726598"&gt;How to dispatch a Redux action with a timeout?&lt;/a&gt;&lt;/li&gt;
 &lt;li&gt;&lt;a href="https://redux.js.org/advanced/async-actions#async-action-creators"&gt;Async Redux actions&lt;/a&gt;&lt;/li&gt;
 &lt;/ul&gt;</content><category term="python"></category><category term="django"></category><category term="javascript"></category><category term="js"></category><category term="react"></category><category term="django-rest-framework"></category><category term="redux"></category></entry><entry><title>Modern Django: Part 2: Redux and React Router setup</title><link href="http://v1k45.com/blog/modern-django-part-2-redux-and-react-router-setup/" rel="alternate"></link><published>2018-03-02T13:30:00+05:30</published><updated>2018-03-03T21:40:00+05:30</updated><author><name>Vikas Yadav</name></author><id>tag:v1k45.com,2018-03-02:/blog/modern-django-part-2-redux-and-react-router-setup/</id><summary type="html">&lt;p&gt;This is the second part of the tutorial series on how to create a "Modern" web application or SPA using Django and React.js&lt;/p&gt;
-&lt;p&gt;In this part, we'll setup redux and react router in our note taking application. And later connect this frontend to a API backend.&lt;/p&gt;
+&lt;p&gt;In this part, we'll setup redux and react router in our note taking application. And later connect this frontend to an API backend.&lt;/p&gt;
 &lt;p&gt;The code for …&lt;/p&gt;</summary><content type="html">&lt;p&gt;This is the second part of the tutorial series on how to create a "Modern" web application or SPA using Django and React.js&lt;/p&gt;
-&lt;p&gt;In this part, we'll setup redux and react router in our note taking application. And later connect this frontend to a API backend.&lt;/p&gt;
-&lt;p&gt;The code for this repository is hosted on my github, &lt;a href="https://github.com/v1k45/ponynote"&gt;v1k45/ponynote&lt;/a&gt;. You can checkout &lt;code&gt;part-2&lt;/code&gt; branch to all the changes done till the end of this part.&lt;/p&gt;
+&lt;p&gt;In this part, we'll setup redux and react router in our note taking application. And later connect this frontend to an API backend.&lt;/p&gt;
+&lt;p&gt;The code for this repository is hosted on my github, &lt;a href="https://github.com/v1k45/ponynote"&gt;v1k45/ponynote&lt;/a&gt;. You can checkout &lt;code&gt;part-2&lt;/code&gt; branch to see all the changes done till the end of this part.&lt;/p&gt;
 &lt;h3&gt;What is react router?&lt;/h3&gt;
 &lt;p&gt;&lt;a href="https://reacttraining.com/react-router/web"&gt;React-router-dom&lt;/a&gt; is a library which is used for in-application routing in react applications. Using it you can mount components on urls of your choice.&lt;/p&gt;
-&lt;p&gt;We'll first create router for our application with relevant routes. Since this is a basic note-taking application, just one component/route should suffice but we'll still create few other components and routes for demonstration.&lt;/p&gt;
+&lt;p&gt;We'll first create a router for our application with relevant routes. Since this is a basic note-taking application, just one component/route should suffice but we'll still create a few other components and routes for demonstration.&lt;/p&gt;
 &lt;h4&gt;Setup react-router-dom&lt;/h4&gt;
 &lt;p&gt;Start by installing react-router-dom:&lt;/p&gt;
 &lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;$ &lt;span class="nb"&gt;cd&lt;/span&gt; ponynote/frontend
@@ -1403,7 +1400,7 @@ $ npm install --save react-router-dom
 &lt;/pre&gt;&lt;/div&gt;
 
 
-&lt;p&gt;After this let us create few components which we will be using in the application. To maintain a clean directory structure we'll create all components inside components directory. We will create a &lt;code&gt;PonyNote&lt;/code&gt; component for our main app and &lt;code&gt;NotFound&lt;/code&gt; component for 404 pages.&lt;/p&gt;
+&lt;p&gt;After this let us create a few components which we will be using in the application. To maintain a clean directory structure we'll create all components inside a components directory. We will create a &lt;code&gt;PonyNote&lt;/code&gt; component for our main app and &lt;code&gt;NotFound&lt;/code&gt; component for 404 pages.&lt;/p&gt;
 &lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;$ &lt;span class="nb"&gt;cd&lt;/span&gt; src/
 $ mkdir components/
 $ touch components/index.js
@@ -1435,7 +1432,7 @@ $ touch components/NotFound.jsx
 &lt;/pre&gt;&lt;/div&gt;
 
 
-&lt;p&gt;The above code will make use of &lt;a href="https://reacttraining.com/react-router/web/api/BrowserRouter"&gt;&lt;code&gt;BrowserRouter&lt;/code&gt;&lt;/a&gt;, which means it will use the HTML5 history API to maintain the application routing. The &lt;a href="https://reacttraining.com/react-router/web/api/Switch"&gt;&lt;code&gt;Switch&lt;/code&gt;&lt;/a&gt; component is optional, but it is used for efficient routing. The &lt;a href="https://reacttraining.com/react-router/web/api/Route"&gt;&lt;code&gt;Route&lt;/code&gt;&lt;/a&gt; components renders the target component when the location of the application matches it's path. If no path is specified to the &lt;code&gt;Route&lt;/code&gt;, all path matches return true, which is useful for 404 pages.&lt;/p&gt;
+&lt;p&gt;The above code will make use of &lt;a href="https://reacttraining.com/react-router/web/api/BrowserRouter"&gt;&lt;code&gt;BrowserRouter&lt;/code&gt;&lt;/a&gt;, which means it will use the HTML5 history API to maintain the application routing. The &lt;a href="https://reacttraining.com/react-router/web/api/Switch"&gt;&lt;code&gt;Switch&lt;/code&gt;&lt;/a&gt; component is optional, but it is used for efficient routing. The &lt;a href="https://reacttraining.com/react-router/web/api/Route"&gt;&lt;code&gt;Route&lt;/code&gt;&lt;/a&gt; components render the target component when the location of the application matches it's path. If no path is specified to the &lt;code&gt;Route&lt;/code&gt;, all path matches return true, which is useful for 404 pages.&lt;/p&gt;
 &lt;p&gt;Now that our component is ready, we can update our components to show actual content.&lt;/p&gt;
 &lt;p&gt;In the &lt;code&gt;PonyNote.jsx&lt;/code&gt;:&lt;/p&gt;
 &lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="nn"&gt;React&lt;/span&gt;&lt;span class="o"&gt;,&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt; &lt;span class="n"&gt;Component&lt;/span&gt; &lt;span class="p"&gt;}&lt;/span&gt; &lt;span class="kn"&gt;from&lt;/span&gt; &lt;span class="s1"&gt;&amp;#39;react&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
@@ -1475,7 +1472,7 @@ $ touch components/NotFound.jsx
 &lt;/pre&gt;&lt;/div&gt;
 
 
-&lt;p&gt;After this, start django development server and webpack hotloader:&lt;/p&gt;
+&lt;p&gt;After this, start the django development server and webpack hotloader:&lt;/p&gt;
 &lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;(ponynote) $ ./manage.py runserver
 $ cd frontend &amp;amp;&amp;amp; npm run start
 &lt;/pre&gt;&lt;/div&gt;
@@ -1483,11 +1480,11 @@ $ cd frontend &amp;amp;&amp;amp; npm run start
 
 &lt;p&gt;You should see the following page in your browser:&lt;/p&gt;
 &lt;p&gt;&lt;img alt="React router example welcome page" src="http://v1k45.com/images/modern-django-2-rrd-welcome.png"&gt;&lt;/p&gt;
-&lt;p&gt;And when clicked on the contact link, you should get the 404 page:&lt;/p&gt;
+&lt;p&gt;And when you click on the contact link, you should get the 404 page:&lt;/p&gt;
 &lt;p&gt;&lt;img alt="React router example 404 page" src="http://v1k45.com/images/modern-django-2-rrd-404.png"&gt;&lt;/p&gt;
-&lt;p&gt;And you'll be able to browse back to previous page using the "Back" button in your browser.&lt;/p&gt;
+&lt;p&gt;And you'll be able to browse back to the previous page using the "Back" button in your browser.&lt;/p&gt;
 &lt;h3&gt;What is Redux?&lt;/h3&gt;
-&lt;p&gt;&lt;a href="https://redux.js.org/"&gt;Redux&lt;/a&gt; is a global application state management library based on &lt;a href="http://facebook.github.io/flux/"&gt;Flux&lt;/a&gt; architecture of unidirectional data flow.&lt;/p&gt;
+&lt;p&gt;&lt;a href="https://redux.js.org/"&gt;Redux&lt;/a&gt; is a global application state management library based on &lt;a href="http://facebook.github.io/flux/"&gt;Flux&lt;/a&gt; architecture and unidirectional data flow.&lt;/p&gt;
 &lt;p&gt;There are three major components in redux: &lt;a href="https://redux.js.org/basics/actions"&gt;actions&lt;/a&gt;, &lt;a href="https://redux.js.org/basics/reducers"&gt;reducers&lt;/a&gt; and &lt;a href="https://redux.js.org/basics/store"&gt;store&lt;/a&gt;.&lt;/p&gt;
 &lt;p&gt;&lt;img alt="Redux flow chart" src="http://v1k45.com/images/modern-django-2-redux-flow.png"&gt;&lt;/p&gt;
 &lt;ul&gt;
@@ -1512,7 +1509,7 @@ $ cd frontend &amp;amp;&amp;amp; npm run start
 &lt;/pre&gt;&lt;/div&gt;
 
 
-&lt;p&gt;Create empty action and reducers files:&lt;/p&gt;
+&lt;p&gt;Create empty action and reducer files:&lt;/p&gt;
 &lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;$ touch actions/index.js reducers/index.js
 $ touch actions/notes.js reducers/notes.js
 &lt;/pre&gt;&lt;/div&gt;
@@ -1533,10 +1530,10 @@ $ touch actions/notes.js reducers/notes.js
 &lt;/pre&gt;&lt;/div&gt;
 
 
-&lt;p&gt;The &lt;code&gt;initialState&lt;/code&gt; is the initial application state for notes (duh!). The &lt;code&gt;notes&lt;/code&gt; function is a reducer, it takes state and action as argument. We have defined one note for now.&lt;/p&gt;
+&lt;p&gt;The &lt;code&gt;initialState&lt;/code&gt; is the initial application state for notes (duh!). The &lt;code&gt;notes&lt;/code&gt; function is a reducer, it takes state and action as arguments. We have defined one note for now.&lt;/p&gt;
 &lt;p&gt;Note that the &lt;code&gt;initialState&lt;/code&gt; can be any valid javascript type. For our use case we are directly using Array but most commonly the state is defined as a Javascript object.&lt;/p&gt;
-&lt;p&gt;A common way of creating a reducers is to have a switch statement which handles all types of actions using case label. For now, lets return the current application state as default with no cases.&lt;/p&gt;
-&lt;p&gt;After this reducer is created we need to use in our application using redux store. For this, first edit &lt;code&gt;reducers/index.js&lt;/code&gt;:&lt;/p&gt;
+&lt;p&gt;A common way of creating reducers is to have a switch statement which handles all types of actions using case label. For now, lets return the current application state as default with no cases.&lt;/p&gt;
+&lt;p&gt;After this reducer is created we need to use it in our application using redux store. For this, first edit &lt;code&gt;reducers/index.js&lt;/code&gt;:&lt;/p&gt;
 &lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt; &lt;span class="n"&gt;combineReducers&lt;/span&gt; &lt;span class="p"&gt;}&lt;/span&gt; &lt;span class="kn"&gt;from&lt;/span&gt; &lt;span class="s1"&gt;&amp;#39;redux&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
 &lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="nn"&gt;notes&lt;/span&gt; &lt;span class="nn"&gt;from&lt;/span&gt; &lt;span class="s2"&gt;&amp;quot;./notes&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
 
@@ -1549,7 +1546,7 @@ $ touch actions/notes.js reducers/notes.js
 &lt;/pre&gt;&lt;/div&gt;
 
 
-&lt;p&gt;Using the above code we can combine multiple reducers into one. We don't need this in our application but for real world applications with lots of reducers, this comes handy.&lt;/p&gt;
+&lt;p&gt;Using the above code we can combine multiple reducers into one. We don't need this in our application but for real world applications with lots of reducers, this comes in handy.&lt;/p&gt;
 &lt;p&gt;Now we need to create a redux store using this reducer. In &lt;code&gt;App.js&lt;/code&gt; create a store:&lt;/p&gt;
 &lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt; &lt;span class="n"&gt;createStore&lt;/span&gt; &lt;span class="p"&gt;}&lt;/span&gt; &lt;span class="kn"&gt;from&lt;/span&gt; &lt;span class="s2"&gt;&amp;quot;redux&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
 &lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="nn"&gt;ponyApp&lt;/span&gt; &lt;span class="nn"&gt;from&lt;/span&gt; &lt;span class="s2"&gt;&amp;quot;./reducers&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
@@ -1637,13 +1634,13 @@ $ touch actions/notes.js reducers/notes.js
 &lt;/pre&gt;&lt;/div&gt;
 
 
-&lt;p&gt;In the above code we "connect" our component using the &lt;code&gt;connect&lt;/code&gt; high order function provided by &lt;code&gt;react-redux&lt;/code&gt;. &lt;code&gt;mapStateToProps&lt;/code&gt; is used to "map" the application state to the "props" of the component. Here, we are passing the notes array as a component prop with same name. &lt;code&gt;mapDispatchToProps&lt;/code&gt; is "map" action dispatcher functions to component "props".&lt;/p&gt;
+&lt;p&gt;In the above code we "connect" our component using the &lt;code&gt;connect&lt;/code&gt; high order function provided by &lt;code&gt;react-redux&lt;/code&gt;. &lt;code&gt;mapStateToProps&lt;/code&gt; is used to "map" the application state to the "props" of the component. Here, we are passing the notes array as a component prop with same name. &lt;code&gt;mapDispatchToProps&lt;/code&gt; is "mapping" action dispatcher functions to component "props".&lt;/p&gt;
 &lt;p&gt;Inside the render function we have created a table and iterated all notes with placeholder edit and delete button. The above code should result in a webpage like this:&lt;/p&gt;
 &lt;p&gt;&lt;img alt="Redux sample component" src="http://v1k45.com/images/modern-django-2-redux-in-action.png"&gt;&lt;/p&gt;
 &lt;h4&gt;Working with redux states using actions&lt;/h4&gt;
 &lt;p&gt;Now that we have a read-only implementation of our note-taking app which just displays notes. We will now create actions, reducer cases and UI element to modify the redux state.&lt;/p&gt;
 &lt;h5&gt;Defining actions and reducers&lt;/h5&gt;
-&lt;p&gt;In &lt;code&gt;reducers/notes.js&lt;/code&gt;, add cases to add, update and delete notes inside the switch statement.&lt;/p&gt;
+&lt;p&gt;In &lt;code&gt;reducers/notes.js&lt;/code&gt;, write cases to add, update and delete notes inside the switch statement.&lt;/p&gt;
 &lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="kr"&gt;export&lt;/span&gt; &lt;span class="k"&gt;default&lt;/span&gt; &lt;span class="kd"&gt;function&lt;/span&gt; &lt;span class="nx"&gt;notes&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="nx"&gt;state&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="nx"&gt;initialState&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="nx"&gt;action&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
   &lt;span class="kd"&gt;let&lt;/span&gt; &lt;span class="nx"&gt;noteList&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="nx"&gt;state&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="nx"&gt;slice&lt;/span&gt;&lt;span class="p"&gt;();&lt;/span&gt;
 
@@ -1669,8 +1666,8 @@ $ touch actions/notes.js reducers/notes.js
 &lt;/pre&gt;&lt;/div&gt;
 
 
-&lt;p&gt;In above code we are handling different cases of action payload, namely &lt;code&gt;ADD_NOTE&lt;/code&gt;, &lt;code&gt;UPDATE_NOTE&lt;/code&gt; and &lt;code&gt;UPDATE_NOTE&lt;/code&gt;. This individual cases do what their name suggest and return a modified copy of the state after the said action is done. Here we do not update the state directly, but we return a new state which will replace the current state of the notes reducer.&lt;/p&gt;
-&lt;p&gt;These cases in the reducers will be only invoked when an action is dispatched of respective type. In &lt;code&gt;actions/notes.js&lt;/code&gt; declare the actions:&lt;/p&gt;
+&lt;p&gt;In the above code we are handling different cases of action payload, namely &lt;code&gt;ADD_NOTE&lt;/code&gt;, &lt;code&gt;UPDATE_NOTE&lt;/code&gt; and &lt;code&gt;UPDATE_NOTE&lt;/code&gt;. The individual cases do what their name suggest and return a modified copy of the state after the said action is done. Here we do not update the state directly, but we return a new state which will replace the current state of the notes reducer.&lt;/p&gt;
+&lt;p&gt;The cases in the reducers will only be invoked when an action is dispatched of corresponding type. In &lt;code&gt;actions/notes.js&lt;/code&gt; declare the actions:&lt;/p&gt;
 &lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="kr"&gt;export&lt;/span&gt; &lt;span class="kr"&gt;const&lt;/span&gt; &lt;span class="nx"&gt;addNote&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="nx"&gt;text&lt;/span&gt; &lt;span class="p"&gt;=&amp;gt;&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
   &lt;span class="k"&gt;return&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
     &lt;span class="nx"&gt;type&lt;/span&gt;&lt;span class="o"&gt;:&lt;/span&gt; &lt;span class="s1"&gt;&amp;#39;ADD_NOTE&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;
@@ -1695,7 +1692,7 @@ $ touch actions/notes.js reducers/notes.js
 &lt;/pre&gt;&lt;/div&gt;
 
 
-&lt;p&gt;Each of above function returns an object with &lt;code&gt;type&lt;/code&gt; property using which the reducer determines &lt;em&gt;how&lt;/em&gt; the state is to be updated. Besides &lt;code&gt;type&lt;/code&gt; these payloads can have any property as values which can later be used inside the reducer function while modifying the state.&lt;/p&gt;
+&lt;p&gt;Each of the above functions returns an object with a &lt;code&gt;type&lt;/code&gt; property which the reducer uses to determine &lt;em&gt;how&lt;/em&gt; the state is to be updated. Besides &lt;code&gt;type&lt;/code&gt; these payloads can have any property as values which can later be used inside the reducer function while modifying the state.&lt;/p&gt;
 &lt;p&gt;Update the &lt;code&gt;actions/index.js&lt;/code&gt; file so that we can access all actions in one place:&lt;/p&gt;
 &lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="kr"&gt;import&lt;/span&gt; &lt;span class="o"&gt;*&lt;/span&gt; &lt;span class="nx"&gt;as&lt;/span&gt; &lt;span class="nx"&gt;notes&lt;/span&gt; &lt;span class="nx"&gt;from&lt;/span&gt; &lt;span class="s2"&gt;&amp;quot;./notes&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
 
@@ -1704,8 +1701,8 @@ $ touch actions/notes.js reducers/notes.js
 
 
 &lt;h5&gt;Using Actions inside a component&lt;/h5&gt;
-&lt;p&gt;After the actions are defined, we can use them inside the &lt;code&gt;PonyNote&lt;/code&gt; component by declaring properties in &lt;code&gt;mapDispatchToProps&lt;/code&gt; function.&lt;/p&gt;
-&lt;p&gt;Update the &lt;code&gt;mapDispatchToProps&lt;/code&gt; function to use all actions:&lt;/p&gt;
+&lt;p&gt;After the actions are defined, we can use them inside the &lt;code&gt;PonyNote&lt;/code&gt; component by declaring properties in &lt;code&gt;mapDispatchToProps&lt;/code&gt;.&lt;/p&gt;
+&lt;p&gt;Update &lt;code&gt;mapDispatchToProps&lt;/code&gt; function to use all actions:&lt;/p&gt;
 &lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="kr"&gt;import&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;&lt;span class="nx"&gt;notes&lt;/span&gt;&lt;span class="p"&gt;}&lt;/span&gt; &lt;span class="nx"&gt;from&lt;/span&gt; &lt;span class="s2"&gt;&amp;quot;../actions&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
 
 &lt;span class="kr"&gt;const&lt;/span&gt; &lt;span class="nx"&gt;mapDispatchToProps&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="nx"&gt;dispatch&lt;/span&gt; &lt;span class="p"&gt;=&amp;gt;&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
@@ -1724,7 +1721,7 @@ $ touch actions/notes.js reducers/notes.js
 &lt;/pre&gt;&lt;/div&gt;
 
 
-&lt;p&gt;Now all these dispatch actions are accessible in side a component using &lt;code&gt;this.props&lt;/code&gt;.&lt;/p&gt;
+&lt;p&gt;Now all these dispatch actions are accessible inside a component using &lt;code&gt;this.props&lt;/code&gt;.&lt;/p&gt;
 &lt;h5&gt;Building UI elements to dispatch actions&lt;/h5&gt;
 &lt;p&gt;Lets start by creating a form to add new notes to the notes redux state. In the &lt;code&gt;PonyNote&lt;/code&gt; component, declare &lt;code&gt;state&lt;/code&gt; and &lt;code&gt;submitNote&lt;/code&gt; method.&lt;/p&gt;
 &lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="nx"&gt;state&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
@@ -1739,7 +1736,7 @@ $ touch actions/notes.js reducers/notes.js
 &lt;/pre&gt;&lt;/div&gt;
 
 
-&lt;p&gt;Inside the body of the component put the HTML form to enter text and save the note:&lt;/p&gt;
+&lt;p&gt;Inside the body of the component add the HTML form to enter text and save the note:&lt;/p&gt;
 &lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="nt"&gt;&amp;lt;h3&amp;gt;&lt;/span&gt;Add new note&lt;span class="nt"&gt;&amp;lt;/h3&amp;gt;&lt;/span&gt;
 &lt;span class="nt"&gt;&amp;lt;form&lt;/span&gt; &lt;span class="na"&gt;onSubmit=&lt;/span&gt;&lt;span class="s"&gt;{this.submitNote}&lt;/span&gt;&lt;span class="nt"&gt;&amp;gt;&lt;/span&gt;
   &lt;span class="nt"&gt;&amp;lt;input&lt;/span&gt;
@@ -1753,7 +1750,7 @@ $ touch actions/notes.js reducers/notes.js
 
 
 &lt;p&gt;The above code will store the note text in the component state and save it when the form is submitted. &lt;code&gt;onSubmit&lt;/code&gt;, the application will dispatch an action &lt;code&gt;ADD_NOTE&lt;/code&gt; which will then add the note to redux state.&lt;/p&gt;
-&lt;p&gt;Similarly we can add option to delete notes when the "delete" button is pressed. Replace the contents of &lt;code&gt;tbody&lt;/code&gt; with the following:&lt;/p&gt;
+&lt;p&gt;Similarly we can add an option to delete notes when the "delete" button is pressed. Replace the contents of &lt;code&gt;tbody&lt;/code&gt; with the following:&lt;/p&gt;
 &lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;{this.props.notes.map((note, id) =&amp;gt; (
   &lt;span class="nt"&gt;&amp;lt;tr&lt;/span&gt; &lt;span class="na"&gt;key=&lt;/span&gt;&lt;span class="s"&gt;{`note_${id}`}&lt;/span&gt;&lt;span class="nt"&gt;&amp;gt;&lt;/span&gt;
     &lt;span class="nt"&gt;&amp;lt;td&amp;gt;&lt;/span&gt;{note.text}&lt;span class="nt"&gt;&amp;lt;/td&amp;gt;&lt;/span&gt;
@@ -1791,7 +1788,7 @@ $ touch actions/notes.js reducers/notes.js
 &lt;/pre&gt;&lt;/div&gt;
 
 
-&lt;p&gt;The component state now keeps track whether we are creating or updating a note, &lt;code&gt;submitNote&lt;/code&gt; method changes behavior based on component state. We have also added helper method to load and reset form for updating notes.&lt;/p&gt;
+&lt;p&gt;The component state now keeps track whether we are creating or updating a note. The &lt;code&gt;submitNote&lt;/code&gt; method changes behavior based on component state. We have also added a helper method to load and reset the form for updating notes.&lt;/p&gt;
 &lt;p&gt;Inside the form element, place a button to reset form after selecting notes to edit by mistake.&lt;/p&gt;
 &lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="nt"&gt;&amp;lt;button&lt;/span&gt; &lt;span class="na"&gt;onClick=&lt;/span&gt;&lt;span class="s"&gt;{this.resetForm}&lt;/span&gt;&lt;span class="nt"&gt;&amp;gt;&lt;/span&gt;Reset&lt;span class="nt"&gt;&amp;lt;/button&amp;gt;&lt;/span&gt;
 &lt;/pre&gt;&lt;/div&gt;
@@ -1823,7 +1820,7 @@ $ wget wget https://raw.githubusercontent.com/oxalorg/sakura/master/css/sakura.c
 &lt;p&gt;Much better!&lt;/p&gt;
 &lt;p&gt;&lt;img alt="webapp with css" src="http://v1k45.com/images/modern-django-2-sakura.png"&gt;&lt;/p&gt;
 &lt;h6&gt;&lt;/h6&gt;
-&lt;p&gt;Since our webapp is working smoothly on client side but cannot store data permanently, in &lt;a href="http://v1k45.com/blog/modern-django-part-3-creating-an-api-and-integrating-with-react/"&gt;next post&lt;/a&gt; we will create models and APIs in django to store and manipulate notes from database so that we don't lose any notes.&lt;/p&gt;
+&lt;p&gt;Our webapp is working smoothly client-side but cannot store data permanently. In the &lt;a href="http://v1k45.com/blog/modern-django-part-3-creating-an-api-and-integrating-with-react/"&gt;next post&lt;/a&gt; we will create models and APIs in django to store and manipulate notes from database. This way we don't lose any notes.&lt;/p&gt;
 &lt;h3&gt;Reference&lt;/h3&gt;
 &lt;ul&gt;
 &lt;li&gt;&lt;a href="https://redux.js.org/basics/example-todo-list"&gt;Example: Todo List with redux&lt;/a&gt;&lt;/li&gt;
@@ -1875,7 +1872,7 @@ $ wget wget https://raw.githubusercontent.com/oxalorg/sakura/master/css/sakura.c
 
 &lt;p&gt;Now that we have got django working, it is time to set it up to work with React JS.&lt;/p&gt;
 &lt;h3&gt;Setup ReactJS with Webpack&lt;/h3&gt;
-&lt;p&gt;If you haven't heard of Webpack before, it has now become the defacto tool to for &lt;em&gt;module bundling&lt;/em&gt;, compiling all your dependencies to a small bundles (mostly one). You can learn more about webpack from their &lt;a href="https://webpack.js.org/"&gt;official website&lt;/a&gt;.&lt;/p&gt;
+&lt;p&gt;If you haven't heard of Webpack before, it has now become the defacto tool to for &lt;em&gt;module bundling&lt;/em&gt;, compiling all your dependencies to small bundles (mostly one). You can learn more about webpack from their &lt;a href="https://webpack.js.org/"&gt;official website&lt;/a&gt;.&lt;/p&gt;
 &lt;p&gt;We won't be directly writing webpack configuration ourselves though, we will use &lt;code&gt;create-react-app&lt;/code&gt; to generate the project boilerplate with all the configurations in it. Think of &lt;code&gt;create-react-app&lt;/code&gt; as &lt;code&gt;django-admin startproject&lt;/code&gt; command but much more powerful.&lt;/p&gt;
 &lt;p&gt;For this, first we will install &lt;code&gt;create-react-app&lt;/code&gt; sytem-wide using npm. Because we are installing system-wide, we will need superuser permissions.&lt;/p&gt;
 &lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;$ sudo npm install -g create-react-app
@@ -1925,7 +1922,7 @@ $ npm run eject
 &lt;/pre&gt;&lt;/div&gt;
 
 
-&lt;p&gt;It is pretty obvious by the directory name that which file is store where.&lt;/p&gt;
+&lt;p&gt;It is pretty obvious by the directory name which files are stored where.&lt;/p&gt;
 &lt;p&gt;You can test this application by running&lt;/p&gt;
 &lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;$ npm run start
 &lt;/pre&gt;&lt;/div&gt;
@@ -1933,7 +1930,7 @@ $ npm run eject
 
 &lt;p&gt;This will show a React welcome page.&lt;/p&gt;
 &lt;p&gt;&lt;img alt="React welcome page" src="http://v1k45.com/images/modern-django-1-react-welcome.png"&gt;&lt;/p&gt;
-&lt;p&gt;The development server has hot loading enabled by default. This means any changes you do in you source files will be instantly reflected in the browser without you having to refresh the page manually again and again.&lt;/p&gt;
+&lt;p&gt;The development server has hot loading enabled by default. This means any changes you do in your source files will be instantly reflected in the browser without you having to refresh the page manually again and again.&lt;/p&gt;
 &lt;h3&gt;Integrating React and Django&lt;/h3&gt;
 &lt;p&gt;Now that we have a working django server and webpack dev server running react, we will now integrate both of them so that Django can show the SPA from it's own server. We will do that using &lt;code&gt;django-webpack-loader&lt;/code&gt; a django application which injects link and script tag for the bundles which webpack generates dynamically.&lt;/p&gt;
 &lt;p&gt;We will start by installing &lt;code&gt;webpack_loader&lt;/code&gt; in our django project first:&lt;/p&gt;
@@ -1951,7 +1948,7 @@ $ npm run eject
 &lt;/pre&gt;&lt;/div&gt;
 
 
-&lt;p&gt;To serve the index page of the application we need to create a view and template in django. We'll start by creating an index template at &lt;code&gt;templates/index.html&lt;/code&gt; in project root. We will also need to update project's template settings so it it can detect the tempalte directory.&lt;/p&gt;
+&lt;p&gt;To serve the index page of the application we need to create a view and template in django. We'll start by creating an index template at &lt;code&gt;templates/index.html&lt;/code&gt; in project root. We will also need to update the project's template settings so it can detect the template directory.&lt;/p&gt;
 &lt;p&gt;In &lt;code&gt;ponynote.settings.py&lt;/code&gt;'s TEMPLATES setting:&lt;/p&gt;
 &lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="n"&gt;TEMPLATES&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="p"&gt;[&lt;/span&gt;
     &lt;span class="p"&gt;{&lt;/span&gt;
@@ -1981,7 +1978,7 @@ $ npm run eject
 &lt;/pre&gt;&lt;/div&gt;
 
 
-&lt;p&gt;The HTML division with &lt;code&gt;root&lt;/code&gt; id is the mounting point of our react application. The &lt;code&gt;render_bundle&lt;/code&gt; tag with &lt;code&gt;main&lt;/code&gt; as argument renders script tag for bundle named &lt;code&gt;main&lt;/code&gt; which is produced by out webpack config.&lt;/p&gt;
+&lt;p&gt;The HTML division with &lt;code&gt;root&lt;/code&gt; id is the mounting point of our react application. The &lt;code&gt;render_bundle&lt;/code&gt; tag with &lt;code&gt;main&lt;/code&gt; as argument renders script tag for bundle named &lt;code&gt;main&lt;/code&gt; which is produced by our webpack config.&lt;/p&gt;
 &lt;p&gt;Now that the template is ready, let's create a view to serve it. Since this will be a plain template, we can use django's &lt;code&gt;TemplateView&lt;/code&gt; directly in our url config. In your project &lt;code&gt;ponynote.urls.py&lt;/code&gt; file:&lt;/p&gt;
 &lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="kn"&gt;from&lt;/span&gt; &lt;span class="nn"&gt;django.conf.urls&lt;/span&gt; &lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="n"&gt;url&lt;/span&gt;
 &lt;span class="kn"&gt;from&lt;/span&gt; &lt;span class="nn"&gt;django.contrib&lt;/span&gt; &lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="n"&gt;admin&lt;/span&gt;
@@ -2044,7 +2041,7 @@ $ npm run eject
 &lt;/pre&gt;&lt;/div&gt;
 
 
-&lt;p&gt;That's it. Stop the webpack server and run it again and go to &lt;a href="http://localhost:8000/"&gt;http://localhost:8000/&lt;/a&gt;, you should see the same react welocme page as you did on webpack server page.&lt;/p&gt;
+&lt;p&gt;That's it. Stop the webpack server and run it again and go to &lt;a href="http://localhost:8000/"&gt;http://localhost:8000/&lt;/a&gt;, you should see the same react welcome page as you did on webpack server page.&lt;/p&gt;
 &lt;p&gt;Now, any changes you do in &lt;code&gt;src/App.js&lt;/code&gt; file will be instantly reflected on the opened page in browser using hot loading.&lt;/p&gt;
 &lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="nn"&gt;React&lt;/span&gt;&lt;span class="o"&gt;,&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt; &lt;span class="n"&gt;Component&lt;/span&gt; &lt;span class="p"&gt;}&lt;/span&gt; &lt;span class="kn"&gt;from&lt;/span&gt; &lt;span class="s1"&gt;&amp;#39;react&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
 &lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="nn"&gt;logo&lt;/span&gt; &lt;span class="nn"&gt;from&lt;/span&gt; &lt;span class="s1"&gt;&amp;#39;./logo.svg&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
@@ -2097,7 +2094,7 @@ $ npm run eject
 &lt;/pre&gt;&lt;/div&gt;
 
 
-&lt;p&gt;After this the change webpack's build output dir to &lt;code&gt;assets/bundles&lt;/code&gt;. In &lt;code&gt;frontend/config/paths.js&lt;/code&gt; change the &lt;code&gt;appBuild&lt;/code&gt; value:&lt;/p&gt;
+&lt;p&gt;After this then change webpack's build output dir to &lt;code&gt;assets/bundles&lt;/code&gt;. In &lt;code&gt;frontend/config/paths.js&lt;/code&gt; change the &lt;code&gt;appBuild&lt;/code&gt; value:&lt;/p&gt;
 &lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="c1"&gt;// config after eject: we&amp;#39;re in ./config/&lt;/span&gt;
 &lt;span class="nx"&gt;module&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="nx"&gt;exports&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
   &lt;span class="c1"&gt;// .. KEEP OTHER VALUES&lt;/span&gt;
@@ -2155,13 +2152,13 @@ $ npm run eject
 &lt;/pre&gt;&lt;/div&gt;
 
 
-&lt;p&gt;Here we configured webpack to set &lt;code&gt;static/bundles/&lt;/code&gt; as &lt;code&gt;publicPath&lt;/code&gt; because the build files will be stored in &lt;code&gt;assets/bundles&lt;/code&gt; and &lt;code&gt;/static/&lt;/code&gt; url points to the &lt;code&gt;assets&lt;/code&gt; directory. We also remove &lt;code&gt;static&lt;/code&gt; prefixes from filenames and path to prevent unnecessary nesting of build files. This will make webpack to build all files directory into &lt;code&gt;assets/bundles&lt;/code&gt; without creating an additional &lt;code&gt;static&lt;/code&gt; directory inside it.&lt;/p&gt;
+&lt;p&gt;Here we configured webpack to set &lt;code&gt;static/bundles/&lt;/code&gt; as &lt;code&gt;publicPath&lt;/code&gt; because the build files will be stored in &lt;code&gt;assets/bundles&lt;/code&gt; and &lt;code&gt;/static/&lt;/code&gt; url points to the &lt;code&gt;assets&lt;/code&gt; directory. We also remove &lt;code&gt;static&lt;/code&gt; prefixes from filenames and path to prevent unnecessary nesting of build files. This will make webpack move the whole files directory into &lt;code&gt;assets/bundles&lt;/code&gt; without creating an additional &lt;code&gt;static&lt;/code&gt; directory inside it.&lt;/p&gt;
 &lt;p&gt;After saving the file, we can build the javascript files using the following command:&lt;/p&gt;
 &lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;$ npm run build
 &lt;/pre&gt;&lt;/div&gt;
 
 
-&lt;p&gt;This will create bunch of files in &lt;code&gt;assets/bundles&lt;/code&gt; and a &lt;code&gt;webpack-stats.prod.json&lt;/code&gt; file in the project root.&lt;/p&gt;
+&lt;p&gt;This will create a bunch of files in &lt;code&gt;assets/bundles&lt;/code&gt; and a &lt;code&gt;webpack-stats.prod.json&lt;/code&gt; file in the project root.&lt;/p&gt;
 &lt;p&gt;To check if everything was setup properly, we can run django server using production settings with webpack server stopped.&lt;/p&gt;
 &lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;$ python manage.py runserver --settings&lt;span class="o"&gt;=&lt;/span&gt;ponynote.production_settings
 &lt;/pre&gt;&lt;/div&gt;
@@ -2171,18 +2168,18 @@ $ npm run eject
 &lt;h4&gt;Important points&lt;/h4&gt;
 &lt;ul&gt;
 &lt;li&gt;
-&lt;p&gt;It is better to build your js files on your CI server or your deployment server instead on including in version control or source code.&lt;/p&gt;
+&lt;p&gt;It is better to build your js files on your CI server or your deployment server instead of including them in version control or source code.&lt;/p&gt;
 &lt;/li&gt;
 &lt;li&gt;
 &lt;p&gt;Make sure you run &lt;code&gt;collectstatic&lt;/code&gt; after you &lt;code&gt;build&lt;/code&gt; the js files, otherwise your webserver won't be able to find the build files.&lt;/p&gt;
 &lt;/li&gt;
 &lt;li&gt;
-&lt;p&gt;Make sure your build generates a &lt;code&gt;webpack-stats.prod.json&lt;/code&gt; file. If you are deploy by building the files manually, make sure you also include it when you're copying files from your machine to server.&lt;/p&gt;
+&lt;p&gt;Make sure your build generates a &lt;code&gt;webpack-stats.prod.json&lt;/code&gt; file. If you are deploying by building the files manually, make sure you also include it when you're copying files from your machine to server.&lt;/p&gt;
 &lt;/li&gt;
 &lt;/ul&gt;
-&lt;p&gt;All the directory and file names specified above are not enforced in any senese. Feel free to change the directory location or file names to your liking. But make sure all config files are properly updated.&lt;/p&gt;
+&lt;p&gt;All the directory and filenames specified above are not enforced in any sense. Feel free to change the directory location or filenames to your liking. But make sure all config files are properly updated.&lt;/p&gt;
 &lt;h6&gt;&lt;/h6&gt;
-&lt;p&gt;That's all on how to setup react and django to work together. In &lt;a href="http://v1k45.com/blog/modern-django-part-2-redux-and-react-router-setup/"&gt;next post&lt;/a&gt; we'll setup in-application routing using &lt;code&gt;react-router-dom&lt;/code&gt; and global state management using &lt;code&gt;redux&lt;/code&gt;.&lt;/p&gt;
+&lt;p&gt;That's all on how to setup react and django to work together. In the &lt;a href="http://v1k45.com/blog/modern-django-part-2-redux-and-react-router-setup/"&gt;next post&lt;/a&gt; we'll setup in-application routing using &lt;code&gt;react-router-dom&lt;/code&gt; and global state management using &lt;code&gt;redux&lt;/code&gt;.&lt;/p&gt;
 &lt;h3&gt;References&lt;/h3&gt;
 &lt;ul&gt;
 &lt;li&gt;&lt;a href="http://owaislone.org/blog/webpack-plus-reactjs-and-django/"&gt;Using Webpack transparently with Django&lt;/a&gt;&lt;/li&gt;

@@ -101,7 +101,7 @@
 
 <p>Now that we have got django working, it is time to set it up to work with React JS.</p>
 <h3>Setup ReactJS with Webpack</h3>
-<p>If you haven't heard of Webpack before, it has now become the defacto tool to for <em>module bundling</em>, compiling all your dependencies to a small bundles (mostly one). You can learn more about webpack from their <a href="https://webpack.js.org/">official website</a>.</p>
+<p>If you haven't heard of Webpack before, it has now become the defacto tool to for <em>module bundling</em>, compiling all your dependencies to small bundles (mostly one). You can learn more about webpack from their <a href="https://webpack.js.org/">official website</a>.</p>
 <p>We won't be directly writing webpack configuration ourselves though, we will use <code>create-react-app</code> to generate the project boilerplate with all the configurations in it. Think of <code>create-react-app</code> as <code>django-admin startproject</code> command but much more powerful.</p>
 <p>For this, first we will install <code>create-react-app</code> sytem-wide using npm. Because we are installing system-wide, we will need superuser permissions.</p>
 <div class="highlight"><pre><span></span>$ sudo npm install -g create-react-app
@@ -151,7 +151,7 @@ $ npm run eject
 </pre></div>
 
 
-<p>It is pretty obvious by the directory name that which file is store where.</p>
+<p>It is pretty obvious by the directory name which files are stored where.</p>
 <p>You can test this application by running</p>
 <div class="highlight"><pre><span></span>$ npm run start
 </pre></div>
@@ -159,7 +159,7 @@ $ npm run eject
 
 <p>This will show a React welcome page.</p>
 <p><img alt="React welcome page" src="http://v1k45.com/images/modern-django-1-react-welcome.png"></p>
-<p>The development server has hot loading enabled by default. This means any changes you do in you source files will be instantly reflected in the browser without you having to refresh the page manually again and again.</p>
+<p>The development server has hot loading enabled by default. This means any changes you do in your source files will be instantly reflected in the browser without you having to refresh the page manually again and again.</p>
 <h3>Integrating React and Django</h3>
 <p>Now that we have a working django server and webpack dev server running react, we will now integrate both of them so that Django can show the SPA from it's own server. We will do that using <code>django-webpack-loader</code> a django application which injects link and script tag for the bundles which webpack generates dynamically.</p>
 <p>We will start by installing <code>webpack_loader</code> in our django project first:</p>
@@ -177,7 +177,7 @@ $ npm run eject
 </pre></div>
 
 
-<p>To serve the index page of the application we need to create a view and template in django. We'll start by creating an index template at <code>templates/index.html</code> in project root. We will also need to update project's template settings so it it can detect the tempalte directory.</p>
+<p>To serve the index page of the application we need to create a view and template in django. We'll start by creating an index template at <code>templates/index.html</code> in project root. We will also need to update the project's template settings so it can detect the template directory.</p>
 <p>In <code>ponynote.settings.py</code>'s TEMPLATES setting:</p>
 <div class="highlight"><pre><span></span><span class="n">TEMPLATES</span> <span class="o">=</span> <span class="p">[</span>
     <span class="p">{</span>
@@ -207,7 +207,7 @@ $ npm run eject
 </pre></div>
 
 
-<p>The HTML division with <code>root</code> id is the mounting point of our react application. The <code>render_bundle</code> tag with <code>main</code> as argument renders script tag for bundle named <code>main</code> which is produced by out webpack config.</p>
+<p>The HTML division with <code>root</code> id is the mounting point of our react application. The <code>render_bundle</code> tag with <code>main</code> as argument renders script tag for bundle named <code>main</code> which is produced by our webpack config.</p>
 <p>Now that the template is ready, let's create a view to serve it. Since this will be a plain template, we can use django's <code>TemplateView</code> directly in our url config. In your project <code>ponynote.urls.py</code> file:</p>
 <div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">django.conf.urls</span> <span class="kn">import</span> <span class="n">url</span>
 <span class="kn">from</span> <span class="nn">django.contrib</span> <span class="kn">import</span> <span class="n">admin</span>
@@ -270,7 +270,7 @@ $ npm run eject
 </pre></div>
 
 
-<p>That's it. Stop the webpack server and run it again and go to <a href="http://localhost:8000/">http://localhost:8000/</a>, you should see the same react welocme page as you did on webpack server page.</p>
+<p>That's it. Stop the webpack server and run it again and go to <a href="http://localhost:8000/">http://localhost:8000/</a>, you should see the same react welcome page as you did on webpack server page.</p>
 <p>Now, any changes you do in <code>src/App.js</code> file will be instantly reflected on the opened page in browser using hot loading.</p>
 <div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">React</span><span class="o">,</span> <span class="p">{</span> <span class="n">Component</span> <span class="p">}</span> <span class="kn">from</span> <span class="s1">&#39;react&#39;</span><span class="p">;</span>
 <span class="kn">import</span> <span class="nn">logo</span> <span class="nn">from</span> <span class="s1">&#39;./logo.svg&#39;</span><span class="p">;</span>
@@ -323,7 +323,7 @@ $ npm run eject
 </pre></div>
 
 
-<p>After this the change webpack's build output dir to <code>assets/bundles</code>. In <code>frontend/config/paths.js</code> change the <code>appBuild</code> value:</p>
+<p>After this then change webpack's build output dir to <code>assets/bundles</code>. In <code>frontend/config/paths.js</code> change the <code>appBuild</code> value:</p>
 <div class="highlight"><pre><span></span><span class="c1">// config after eject: we&#39;re in ./config/</span>
 <span class="nx">module</span><span class="p">.</span><span class="nx">exports</span> <span class="o">=</span> <span class="p">{</span>
   <span class="c1">// .. KEEP OTHER VALUES</span>
@@ -381,13 +381,13 @@ $ npm run eject
 </pre></div>
 
 
-<p>Here we configured webpack to set <code>static/bundles/</code> as <code>publicPath</code> because the build files will be stored in <code>assets/bundles</code> and <code>/static/</code> url points to the <code>assets</code> directory. We also remove <code>static</code> prefixes from filenames and path to prevent unnecessary nesting of build files. This will make webpack to build all files directory into <code>assets/bundles</code> without creating an additional <code>static</code> directory inside it.</p>
+<p>Here we configured webpack to set <code>static/bundles/</code> as <code>publicPath</code> because the build files will be stored in <code>assets/bundles</code> and <code>/static/</code> url points to the <code>assets</code> directory. We also remove <code>static</code> prefixes from filenames and path to prevent unnecessary nesting of build files. This will make webpack move the whole files directory into <code>assets/bundles</code> without creating an additional <code>static</code> directory inside it.</p>
 <p>After saving the file, we can build the javascript files using the following command:</p>
 <div class="highlight"><pre><span></span>$ npm run build
 </pre></div>
 
 
-<p>This will create bunch of files in <code>assets/bundles</code> and a <code>webpack-stats.prod.json</code> file in the project root.</p>
+<p>This will create a bunch of files in <code>assets/bundles</code> and a <code>webpack-stats.prod.json</code> file in the project root.</p>
 <p>To check if everything was setup properly, we can run django server using production settings with webpack server stopped.</p>
 <div class="highlight"><pre><span></span>$ python manage.py runserver --settings<span class="o">=</span>ponynote.production_settings
 </pre></div>
@@ -397,18 +397,18 @@ $ npm run eject
 <h4>Important points</h4>
 <ul>
 <li>
-<p>It is better to build your js files on your CI server or your deployment server instead on including in version control or source code.</p>
+<p>It is better to build your js files on your CI server or your deployment server instead of including them in version control or source code.</p>
 </li>
 <li>
 <p>Make sure you run <code>collectstatic</code> after you <code>build</code> the js files, otherwise your webserver won't be able to find the build files.</p>
 </li>
 <li>
-<p>Make sure your build generates a <code>webpack-stats.prod.json</code> file. If you are deploy by building the files manually, make sure you also include it when you're copying files from your machine to server.</p>
+<p>Make sure your build generates a <code>webpack-stats.prod.json</code> file. If you are deploying by building the files manually, make sure you also include it when you're copying files from your machine to server.</p>
 </li>
 </ul>
-<p>All the directory and file names specified above are not enforced in any senese. Feel free to change the directory location or file names to your liking. But make sure all config files are properly updated.</p>
+<p>All the directory and filenames specified above are not enforced in any sense. Feel free to change the directory location or filenames to your liking. But make sure all config files are properly updated.</p>
 <h6></h6>
-<p>That's all on how to setup react and django to work together. In <a href="http://v1k45.com/blog/modern-django-part-2-redux-and-react-router-setup/">next post</a> we'll setup in-application routing using <code>react-router-dom</code> and global state management using <code>redux</code>.</p>
+<p>That's all on how to setup react and django to work together. In the <a href="http://v1k45.com/blog/modern-django-part-2-redux-and-react-router-setup/">next post</a> we'll setup in-application routing using <code>react-router-dom</code> and global state management using <code>redux</code>.</p>
 <h3>References</h3>
 <ul>
 <li><a href="http://owaislone.org/blog/webpack-plus-reactjs-and-django/">Using Webpack transparently with Django</a></li>
