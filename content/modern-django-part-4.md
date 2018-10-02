@@ -3,9 +3,9 @@ Date: 2018-04-13 21:00
 Category: Web Development
 Tags: python, django, javascript, js, react, django-rest-framework, django-rest-knox
 
-In [last post]({filename}/modern-django-part-3.md) we managed to create/read/update/delete notes directly into the database using API created by Django Rest Framework with React Frontend. In this one will we allow users to maintain separate notes and protect them using authentication.
+In the [last post]({filename}/modern-django-part-3.md) we managed to create/read/update/delete notes directly into the database using the API created by Django Rest Framework with a React Frontend. In this one will we allow users to maintain separate notes and protect them using authentication.
 
-The code for this repository is hosted on my github, [v1k45/ponynote](https://github.com/v1k45/ponynote). You can checkout `part-4` branch to see all the changes done till the end of this part.
+The code for this repository is hosted on my github, [v1k45/ponynote](https://github.com/v1k45/ponynote). You can checkout branch `part-4` to see all the changes done till the end of this part.
 
 ### Associating notes with users
 
@@ -23,7 +23,7 @@ class Note(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 ```
 
-Make migrations and migrate the changes to database.
+Make migrations and migrate.
 
 ```
 (ponynote)  $ ./manage.py makemigrations
@@ -41,12 +41,12 @@ Running migrations:
 
 We need to create APIs for basic authentication actions like registration, user endpoint, login and logout.
 
-Django Rest Framework allows various kinds of authentication techniques including BasicAuth, SessionAuth, TokenAuth. For single page applications, Token Authentication and their variations like JSON Web Tokens (JWT) are quite common choices.
+Django Rest Framework allows various kinds of authentication techniques including BasicAuth, SessionAuth and TokenAuth. For single page applications, Token Authentication and variations like JSON Web Tokens (JWT) are quite common choices.
 
 
 #### Installing and setting up `knox`
 
-DRF ships with a built-in TokenAuthentication feature but it is not ideal for user facing SPAs because of it lacks basic features. Instead, we will use `django-rest-knox`, It is similar to DRF's TokenAuth but much better and robust.
+DRF ships with a built-in TokenAuthentication feature but it is not ideal for user facing SPAs because it lacks basic features. Instead, we will use `django-rest-knox`. It is similar to DRF's TokenAuth but much better and robust.
 
 Start by installing it:
 
@@ -54,7 +54,7 @@ Start by installing it:
 (ponynote)  $ pip install django-rest-knox
 ```
 
-Update `ponynote/settings.py` by adding `knox` and `rest_framework` to  INSTALLED_APPS and setting knox's TokenAuthentication class as default in DRF.
+Update `ponynote/settings.py` by adding `knox` and `rest_framework` to `INSTALLED_APPS` and setting knox's TokenAuthentication class as default in DRF.
 
 ```python
 INSTALLED_APPS = [
@@ -95,7 +95,7 @@ Running migrations:
 
 #### Creating a Registration API
 
-To allow users to create accounts, we will create an API for registration. Ideally you'd use feature-rich third party applications like `allauth`, `rest-auth`, `djoser` etc to handle all kinds of authentication related needs. But since our application is simple, we are better off our own views/endpoints.
+To allow users to create accounts, we will create an API for registration. Ideally you'd use feature-rich third party applications like `allauth`, `rest-auth`, `djoser` etc to handle all kinds of authentication related needs. But since our application is simple, we are better off with our own views/endpoints.
 
 Start by creating `CreateUserSerializer` and `UserSerializer` in `notes/serializers.py`:
 
@@ -122,7 +122,7 @@ class UserSerializer(serializers.ModelSerializer):
         fields = ('id', 'username')
 ```
 
-We'll use `CreateUserSerializer` for validating input for registration. We aren't using `email`, users will login with username and password. `UserSerializer` will be used to return the output after user has successfully registered.
+We'll use `CreateUserSerializer` for validating input for registration. We aren't using `email`, users will login with username and password. `UserSerializer` will be used to return the output after the user has successfully registered.
 
 Next, create the registration API, In `notes/api.py`:
 
@@ -152,7 +152,7 @@ class RegistrationAPI(generics.GenericAPIView):
 The API is pretty staight-forward, we validate the user input and create an account if the validation passes. In the response, we return the user object in serialized format and an authentication token which will be used by the application to perform user-specific api calls.
 
 
-Update the API endpoints to include registration API, In `notes/endpoints.py`:
+Update the API endpoints to include registration API. In `notes/endpoints.py`:
 
 ```python
 from .api import NoteViewSet, RegistrationAPI
@@ -181,12 +181,12 @@ This will create the user with username `user1` and password `hunter2`. You'll g
 {"user":{"id":1,"username":"user1"},"token":"<TOKEN HERE>"}
 ```
 
-It handles valiadtion cases for fields, including uniquness of username. If you try to send the same data twice, you'll see that the API throws an error that the username needs to be unique.
+It handles validation cases for fields, including uniquness of username. If you try to send the same data twice, you'll see that the API throws an error that the username needs to be unique.
 
 
 #### Creating login API
 
-Now that users can create account, we need a way for our users to log into the application and retrieve the authentication token for user-related actions.
+Now that users can create accounts, we need a way for our users to log into the application and retrieve the authentication token for user-related actions.
 
 First create a `LoginUserSerializer` in `notes/serializers.py`:
 
@@ -205,7 +205,7 @@ class LoginUserSerializer(serializers.Serializer):
         raise serializers.ValidationError("Unable to log in with provided credentials.")
 ```
 
-The `validate` method of this serializer checks if the username and password are correct combination using django's `authenticate` function. It also makes sure the user is active.
+The `validate` method of this serializer checks if the username and password are a correct combination using django's `authenticate` function. It also makes sure the user is active.
 
 Then create a `LoginAPI` in `notes/api.py`:
 
@@ -268,7 +268,7 @@ class UserAPI(generics.RetrieveAPIView):
         return self.request.user
 ```
 
-The above API will return user data for the authenticated user or 4XX range errors if user is not authenticated or token is incorrect.
+The above API will return user data for the authenticated user or 4XX range errors if the user is not authenticated or the token is incorrect.
 
 Add the API to `notes/endpoints.py`:
 
@@ -317,7 +317,7 @@ We did the following changes here:
 
 - Changed the API access from `AllowAny` to `IsAuthenticated`. This will require users to login/send authentication token in order to use this API.
 
-- Override `perform_create` method to save owner of the note while creating it.
+- Override `perform_create` method to save the note owner when creating the note.
 
 - Replace `queryset` attribute with `get_queryset` method and return the notes which the authenticated user owns.
 
@@ -331,7 +331,7 @@ This will make sure the notes api is only accessible to authenticated users and 
 
 ### Bringing Authentication to React app
 
-Authentication flow in the react application will be pretty simple, we'll redirect user to the login page if they are not logged in and then redirect back to the notes page after login is successful.
+Authentication flow in the react application will be pretty simple, we'll redirect the user to the login page if they are not logged in and then redirect back to the notes page after login is successful.
 
 ![react app authentication flow]({filename}/images/modern-django-4-auth-flow.png)
 
@@ -545,7 +545,7 @@ import * as auth from "./auth";
 export {notes, auth}
 ```
 
-#### Restricting anauthorized access
+#### Restricting unauthorized access
 
 In order to stop unauthenticated users from accessing "private" routes we must redirect them to the login page.
 
@@ -635,7 +635,7 @@ The `RootContainerComponent`, as it's name suggests, is the root container of th
 
 The `RootContainer` is then used inside `App` component and is placed inside `Provider` component.
 
-After this, if you go the notes page ([localhost:8000](http://localhost:8000/)), you'll be redirected to the login page.
+After this, if you go to the notes page ([localhost:8000](http://localhost:8000/)), you'll be redirected to the login page.
 
 #### Making login page work
 
@@ -736,7 +736,7 @@ const mapDispatchToProps = dispatch => {
 export default connect(mapStateToProps, mapDispatchToProps)(Login);
 ```
 
-After this you should be able to login from the login page and taken to the notes page if the credentials are correct.
+After this you should be able to login from the login page and be taken to the notes page if the credentials are correct.
 
 ### Registration page
 
@@ -827,7 +827,7 @@ const mapDispatchToProps = dispatch => {
 export default connect(mapStateToProps, mapDispatchToProps)(Login);
 ```
 
-As you can see, the component is pretty similar to `Login.jsx` only noteable difference being the `register` function/action instead of `login` and some other text.
+As you can see, the component is pretty similar to `Login.jsx` only notable difference being the `register` function/action instead of `login` and some other text.
 
 
 Add a `register` action to `frontend/src/actions/auth.js`:
@@ -909,7 +909,7 @@ class RootContainerComponent extends Component {
 
 ```
 
-Now you'd be able to register by going to [localhost:8000/register](http://localhost:8000/register). You'll also see erros on the page if you try to register using an existing username.
+Now you'd be able to register by going to [localhost:8000/register](http://localhost:8000/register). You'll also see errors on the page if you try to register using an existing username.
 
 ### Using auth in notes actions
 
@@ -1095,7 +1095,7 @@ export const logout = () => {
 }
 ```
 
-Now, let's use this action in `PonyNote` component to show a logout link. Update `frontend/src/components/PonyNote.jsx`:
+Now, let's use this action in the `PonyNote` component to show a logout link. Update `frontend/src/components/PonyNote.jsx`:
 
 ```jsx
 import {notes, auth} from "../actions";
@@ -1145,15 +1145,15 @@ const mapDispatchToProps = dispatch => {
 }
 ```
 
-This will display the username of logged in user along with a logout link. Our application will look something like this at this point:
+This will display the username of the logged in user along with a logout link. Our application will look something like this at this point:
 
 ![final page]({filename}/images/modern-django-4-final.png)
 
 ### Summary
 
-Now you'll be able to create, read, update and delete notes privately using user accounts. The notes pages will ebe protected by a login page and anyone would be able to register and start managing their notes.
+Now you'll be able to create, read, update and delete notes privately using user accounts. The notes pages will be protected by a login page and anyone would be able to register and start managing their notes.
 
-I'm not sure what should I post for the next part. I am thinking of either server-side rendering (SSR) of the react application or deployment procedure of the application as a final post.
+I'm not sure what I should post for the next part. I am thinking of either server-side rendering (SSR) of the react application or deployment procedure of the application as a final post.
 
 ### Reference
 
