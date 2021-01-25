@@ -3,9 +3,9 @@ URL: /
 save_as: index.html
 slug: about
 
-I am a programmmer from Mumbai, India. I am fairly good with python and know some amount of Javascript
+I am a programmer from Mumbai, India. I am fairly good with python and know some amount of Javascript
 
-Mostly I do web development in Python/Django and ReactJs
+Mostly I do web development in Python/Django and VueJS
 
 I am available for hire as a freelance developer
 
